@@ -297,13 +297,14 @@
         /// <returns>String with failure details.</returns>
         private string GetFailedStepData()
         {
+            var failDetails = "";
             foreach (var test in this.TestSteps)
             {
                 // If line contains specific "Fail" somwhere in test result string...
-                if (test.TestStatus.Contains("fail", StringComparison.OrdinalIgnoreCase) && test.TestType != null && test.TestValue != null)
-                    return $"{test.TestName}\nValue measured: {test.TestValue}\nLower limit: {test.TestLL}\nUpper limit: {test.TestUL}";
+                if (test.TestStatus.Contains("fail", StringComparison.OrdinalIgnoreCase))
+                    failDetails = $"{test.TestName}\nValue measured: {test.TestValue}\nLower limit: {test.TestLL}\nUpper limit: {test.TestUL}";
             }
-            return "";
+            return failDetails;
         }
 
         /// <summary>
@@ -420,16 +421,17 @@
         public void SetBoardStatus(string status){this.BoardStatus = status;}
         public void SetFailureCause(string failure){this.FailedStep = failure;}
         public void SetStationName(string station){this.Station = station;}
+        public void SetTestProgramPath(string path) { this.TestProgramFilePath = path; }
 
         /// <summary>
         /// Saves standard log file.
         /// </summary>
         /// <exception cref="Exception">Throws exception if some critical data is null or empty.</exception>
-        public void SaveLogFile()
+        public string SaveLogFile()
         {
             if (!checkIfGeneralDataExists()) throw new Exception("Check if general data is ok!");
 
-            var logFileName = $"{DateTime.Now.Month.ToString("00")}{DateTime.Now.Day.ToString("00")}{DateTime.Now.Year}_{DateTime.Now.Hour.ToString("00")}{DateTime.Now.Minute.ToString("00")}{DateTime.Now.Second.ToString("00")}_{this.BoardSerialNumber}.txt";
+            var logFileName = $"{this.TestDateAndTime.Month.ToString("00")}{this.TestDateAndTime.Day.ToString("00")}{this.TestDateAndTime.Year}_{this.TestDateAndTime.Hour.ToString("00")}{this.TestDateAndTime.Minute.ToString("00")}{this.TestDateAndTime.Second.ToString("00")}_{this.BoardSerialNumber}.txt";
             var buffor = new List<string>();
 
             buffor.Add($"PanelBarcode:\t{this.BoardSerialNumber}");
@@ -465,6 +467,8 @@
             var logFilePath = System.IO.Path.Combine(this.Path, logFileName);
 
             File.AppendAllLines(logFilePath, buffor);
+
+            return logFilePath;
         }
 
         #endregion
