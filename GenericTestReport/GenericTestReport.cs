@@ -1,9 +1,35 @@
 ﻿namespace GenericTestReport
 {
+    public interface ILogFile
+    {
+        void AddTestStep(TestStep TS);
+        void SetTestDateAndTime(DateTime dt);
+        void SetBoardSerialNumber(string SN);
+        void SetTestSocket(string sock);
+        void SetBoardStatus(string status);
+        void SetFailureCause(string failure);
+        void SetStationName(string station);
+        void SetTestProgramPath(string path);
+        string SaveLogFile();
+    }
+    public interface ITestStep
+    {
+        void SetTestName(string testName);
+        void SetTestType(string testType);
+        void SetTestDateTime(DateTime testDT);
+        void SetTestStatus(string testStatus);
+        void SetTestValue(string testValue);
+        void SetValueUnit(string valueUnit);
+        void SetTestLowLimit(string LL);
+        void SetTestHighLimit(string UL);
+        void SetFailure(string fail);
+        TestStep GetTestStep();
+    }
+    
     /// <summary>
     /// Provides API essential for handling standard log files data flow on production floor. It is the base for data control and production supervision.
     /// </summary>
-    public class LogFile
+    public class LogFile : ILogFile
     {
         #region Public properties
 
@@ -15,7 +41,7 @@
         /// <summary>
         /// List of test steps in standard txt log file.
         /// </summary>
-        public List<TestStep>? TestSteps { get; private set; }
+        public List<TestStep>? TestSteps { get; private set; } = new List<TestStep>();
 
         /// <summary>
         /// Test date and time in DateTime format.
@@ -66,7 +92,6 @@
         /// Path to test program application file.
         /// </summary>
         public string? TestProgramFilePath { get; private set; }
-
         #endregion
 
         #region Constructor
@@ -414,7 +439,7 @@
 
         #region Public methods
 
-        public void SetTestSteps(List<TestStep> TS){this.TestSteps = TS;}
+        public void AddTestStep(TestStep TS){this.TestSteps.Add(TS);}
         public void SetTestDateAndTime(DateTime dt){this.TestDateAndTime = dt;}
         public void SetBoardSerialNumber(string SN){this.BoardSerialNumber = SN;}
         public void SetTestSocket(string sock){this.TestSocketNumber = sock;}
@@ -477,7 +502,7 @@
     /// <summary>
     /// Describes single test step. E.g.: test status, lower limit, value.
     /// </summary>
-    public class TestStep
+    public class TestStep : ITestStep
     {
         #region Properties
 
@@ -545,7 +570,7 @@
         public void SetTestLowLimit(string LL){this.TestLL = LL;}
         public void SetTestHighLimit(string UL){this.TestUL = UL;}
         public void SetFailure(string fail){this.failure = fail;}
-
+        public TestStep GetTestStep() { return this;}
         #endregion
     }
 }
