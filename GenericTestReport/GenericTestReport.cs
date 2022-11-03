@@ -2,18 +2,7 @@
 {
     public interface ILogFile
     {
-        void SetTestSteps(List<TestStep> TS);
-        void AddTestStep(TestStep TS);
-        void SetTestDateAndTime(DateTime dt);
-        void SetBoardSerialNumber(string SN);
-        void SetTestSocket(string sock);
-        void SetBoardStatus(string status);
-        void SetFailureCause(string failure);
-        void SetStationName(string station);
-        void SetTestProgramPath(string path);
         string SaveLogFile(string path);
-        string GetBoardStatus();
-
     }
     public interface ITestStep
     {
@@ -28,69 +17,20 @@
         void SetFailure(string fail);
     }
 
-    public class LogFile : ILogFile
+    public class LogFile : AuditableModel, ILogFile
     {
         #region Public properties
 
-        /// <summary>
-        /// Path to standard txt log file.
-        /// </summary>
-        public string Path { get; private set; }
+        public int Id { get; private set; }
+        public string? Workstation { get; set; }
+        public string? SerialNumber { get; set; }
+        public string? FixtureSocket { get; set; }
+        public string? Failure { get; set; }
+        public string? Operator { get; set; }
+        public string? TestProgramFilePath { get; set; }
+        public List<TestStep>? TestSteps { get; set; }
+        public TimeSpan? TestingTime { get; set; }
 
-        /// <summary>
-        /// List of test steps in standard txt log file.
-        /// </summary>
-        public List<TestStep>? TestSteps { get; set; } = new List<TestStep>();
-
-        /// <summary>
-        /// Test date and time in DateTime format.
-        /// </summary>
-        public DateTime TestDateAndTime { get; private set; }
-
-        /// <summary>
-        /// Board serial number.
-        /// </summary>
-        public string? BoardSerialNumber { get; private set; }
-
-        /// <summary>
-        /// Number of fixture socket on which board was tested.
-        /// </summary>
-        public string? TestSocketNumber { get; private set; }
-
-        /// <summary>
-        /// Test status of the board.
-        /// </summary>
-        public string? BoardStatus { get; private set; }
-
-        /// <summary>
-        /// If test status is failed, represents name of the failed step.
-        /// </summary>
-        public string? FailedStep { get; private set; }
-
-        /// <summary>
-        /// Test date and time of string format.
-        /// </summary>
-        public string? DateAndTimeOfTest { get; private set; }
-
-        /// <summary>
-        /// Test station on which standard txt log file was created.
-        /// </summary>
-        public string? Station { get; private set; }
-
-        /// <summary>
-        /// Number of lines of standard txt log file.
-        /// </summary>
-        public int NumberOfLines { get; private set; }
-
-        /// <summary>
-        /// Board testing time. Time difference between first and last test step.
-        /// </summary>
-        public TimeSpan? TestingTime { get; private set; }
-
-        /// <summary>
-        /// Path to test program application file.
-        /// </summary>
-        public string? TestProgramFilePath { get; private set; }
         #endregion
 
         #region Constructor
@@ -101,43 +41,25 @@
         /// <param name="path">Path to standard txt log file.</param>
         public LogFile(string path)
         {
-            try
+            if (File.Exists(path))
             {
-                this.Path = string.Empty;
-
-                if (Directory.Exists(path))
-                    this.Path = path;
-
-                if (File.Exists(path))
-                {
-                    this.Path = path;
-                    this.BoardSerialNumber = GetSerialNumber();
-                    this.TestSteps = GetTestSteps();
-                    this.BoardStatus = GetStatus();
-                    this.TestDateAndTime = GetTestDateAndTime();
-                    this.FailedStep = GetFailedStepData();
-                    this.DateAndTimeOfTest = GetDateAndTimeString();
-                    this.Station = GetStationName();
-                    this.NumberOfLines = GetNumberOfLines();
-                    this.TestingTime = GetBoardTestingTime();
-                    this.TestSocketNumber = GetTestSocket();
-                }
+                var text = File.ReadAllLines(path);
+                SerialNumber = GetSerialNumber(text);
+                TestSteps = GetTestSteps(path);
+                Status = GetStatus();
+                TestDateTimeStarted = GetTestDateAndTime();
+                Failure = GetFailedStepData();
+                Workstation = GetStationName(text);
+                TestingTime = GetBoardTestingTime();
+                FixtureSocket = GetTestSocket(text);
+                TestProgramFilePath = GetTestProgramFilePath(text);
             }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-
         }
 
-        /// <summary>
-        /// Create empty LogFile object.
-        /// </summary>
         public LogFile()
         {
-            this.Path = String.Empty;
-        }
 
+        }
         #endregion
 
         #region Private methods
@@ -146,9 +68,9 @@
         /// Get serial number of tested board. This method looks for 'ImageBarcode' field in txt file and returns its value.
         /// </summary>
         /// <returns>Value of 'ImageBarcode' field in log file.</returns>
-        private string? GetSerialNumber()
+        private static string GetSerialNumber(IEnumerable<string> text)
         {
-            foreach (string line in File.ReadLines(this.Path))
+            foreach (string line in text)
             {
                 // Look for 'PanelBarcode' field
                 if (line.Contains("PanelBarcode:"))
@@ -165,18 +87,17 @@
                     return SplittedLine[1].Trim();
                 }
             }
-            // If there is no specific string present in file return null
-            return null;
+            throw new Exception("Serial number is missing!");
         }
 
         /// <summary>
         /// Get list of test steps as a list of TestStep objects
         /// </summary>
         /// <returns>List of TestStep objects</returns>
-        private List<TestStep> GetTestSteps()
+        private static List<TestStep> GetTestSteps(string path)
         {
             var testSteps = new List<TestStep>();
-            string logFileText = File.ReadAllText(this.Path);
+            string logFileText = File.ReadAllText(path);
 
             // Group text into array basing on test step termination character
             string[] splittedText = logFileText.Split("~#~");
@@ -235,7 +156,7 @@
         /// Get test status of the board from txt file. Loop over every test step and check if every test has passed status.
         /// </summary>
         /// <returns>Test status of the board.</returns>
-        private string? GetStatus()
+        private string GetStatus()
         {
             int passedTests = 0;
             foreach (TestStep testStep in this.TestSteps!)
@@ -248,7 +169,7 @@
                 return "Passed";
 
             if (this.TestSteps.Count == 0)
-                return null;
+                throw new Exception("Log file has no test steps!");
 
             return "Failed";
         }
@@ -314,15 +235,6 @@
         }
 
         /// <summary>
-        /// Converts TestDateAndTime property of log file to string.
-        /// </summary>
-        /// <returns>String representation of TestDateAndTime property.</returns>
-        private string GetDateAndTimeString()
-        {
-            return this.TestDateAndTime.ToString();
-        }
-
-        /// <summary>
         /// Returns measured value, test limits and name of test with failes status in form of one string.
         /// </summary>
         /// <returns>String with failure details.</returns>
@@ -342,9 +254,9 @@
         /// Gets value of 'Operator' field in log file.
         /// </summary>
         /// <returns>Value of 'Operator' field.</returns>
-        private string? GetStationName()
+        private static string GetStationName(IEnumerable<string> text)
         {
-            foreach (string line in File.ReadLines(this.Path))
+            foreach (string line in text)
             {
                 // Look for specific field in log file
                 if (line.Contains("Operator:"))
@@ -354,16 +266,7 @@
                     return SplittedLine[1];
                 }
             }
-            return null;
-        }
-
-        /// <summary>
-        /// Gets number of lines in file.
-        /// </summary>
-        /// <returns>Number of lines in file.</returns>
-        private int GetNumberOfLines()
-        {
-            return File.ReadLines(this.Path).Count();
+            throw new Exception("Operator field is missing!");
         }
 
         /// <summary>
@@ -374,7 +277,7 @@
         {
             try
             {
-                return this.TestSteps?.Last().TestDateTime - this.TestDateAndTime;
+                return TestSteps?.Last().TestDateTime - TestDateTimeStarted;
             }
             catch
             {
@@ -385,12 +288,12 @@
         /// <summary>
         /// Gets number of fixture socket which board was tested on.
         /// </summary>
-        private string GetTestSocket()
+        private static string GetTestSocket(IEnumerable<string> text)
         {
             // This flag is set when current line read is test socket test
             bool dataAhead = false;
 
-            foreach (string line in File.ReadLines(this.Path))
+            foreach (string line in text)
             {
                 // Look for specific field in log file
                 if (line.Contains("Test Socket Number"))
@@ -409,6 +312,21 @@
             return "";
         }
 
+        private static string GetTestProgramFilePath(IEnumerable<string> text)
+        {
+            foreach (string line in text)
+            {
+                // Look for specific field in log file
+                if (line.Contains("TestProgram:"))
+                {
+                    // Split string into 2 substrings basing on tab separator and return second substring
+                    string[] SplittedLine = line.Split("\t", StringSplitOptions.None);
+                    return SplittedLine[1];
+                }
+            }
+            return String.Empty;
+        }
+
         /// <summary>
         /// Checks if all general data necessary for log file creation is present.
         /// </summary>
@@ -417,9 +335,8 @@
         {
             var allDataExists = true;
 
-            if (String.IsNullOrEmpty(this.BoardSerialNumber)) allDataExists = false;
-            if (String.IsNullOrEmpty(this.TestProgramFilePath)) allDataExists = false;
-            if (String.IsNullOrEmpty(this.Station)) allDataExists = false;
+            if (String.IsNullOrEmpty(SerialNumber)) allDataExists = false;
+            if (String.IsNullOrEmpty(Workstation)) allDataExists = false;
             if (this.TestSteps?.Count == 0 || this.TestSteps == null) allDataExists = false;
 
             return allDataExists;
@@ -444,28 +361,18 @@
         #endregion
 
         #region Public methods
-
-        public void AddTestStep(TestStep TS) => this.TestSteps?.Add(TS);
-        public void SetTestSteps(List<TestStep> TS) => this.TestSteps = TS;
-        public void SetTestDateAndTime(DateTime dt) => this.TestDateAndTime = dt;
-        public void SetBoardSerialNumber(string SN) => this.BoardSerialNumber = SN;
-        public void SetTestSocket(string sock) => this.TestSocketNumber = sock;
-        public void SetBoardStatus(string status) => this.BoardStatus = status;
-        public void SetFailureCause(string failure) => this.FailedStep = failure;
-        public void SetStationName(string station) => this.Station = station;
-        public void SetTestProgramPath(string path) => this.TestProgramFilePath = path; 
         public string SaveLogFile(string path)
         {
             if (!CheckIfGeneralDataExists()) throw new Exception("Check if general data is ok!");
 
-            var logFileName = $"{this.TestDateAndTime.Month:00}{this.TestDateAndTime.Day:00}{this.TestDateAndTime.Year}_{this.TestDateAndTime.Hour:00}{this.TestDateAndTime.Minute:00}{this.TestDateAndTime.Second:00}_{this.BoardSerialNumber}.txt";
+            var logFileName = $"{TestDateTimeStarted.Month:00}{TestDateTimeStarted.Day:00}{TestDateTimeStarted.Year}_{TestDateTimeStarted.Hour:00}{TestDateTimeStarted.Minute:00}{TestDateTimeStarted.Second:00}_{SerialNumber}.txt";
             var buffor = new List<string>
             {
-                $"PanelBarcode:\t{this.BoardSerialNumber}",
-                $"TestProgram:\t{this.TestProgramFilePath}",
+                $"PanelBarcode:\t{SerialNumber}",
+                $"TestProgram:\t{TestProgramFilePath}",
                 $"TestProgramVer:\t{"1.0"}",
-                $"Operator:\t{this.Station}",
-                $"ImageBarcode:\t{this.BoardSerialNumber}",
+                $"Operator:\t{Workstation}",
+                $"ImageBarcode:\t{SerialNumber}",
                 $""
             };
 
@@ -492,15 +399,11 @@
                 buffor.Add("~#~");
             }
 
-            var logFilePath = System.IO.Path.Combine(path, logFileName);
+            var logFilePath = Path.Combine(path, logFileName);
 
             File.AppendAllLines(logFilePath, buffor);
 
             return logFilePath;
-        }
-        public string GetBoardStatus()
-        {
-            return BoardStatus!;
         }
 
         #endregion
