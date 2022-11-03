@@ -2,6 +2,7 @@
 {
     public interface ILogFile
     {
+        void SetTestSteps(List<TestStep> TS);
         void AddTestStep(TestStep TS);
         void SetTestDateAndTime(DateTime dt);
         void SetBoardSerialNumber(string SN);
@@ -10,7 +11,9 @@
         void SetFailureCause(string failure);
         void SetStationName(string station);
         void SetTestProgramPath(string path);
-        string SaveLogFile();
+        string SaveLogFile(string path);
+        string GetBoardStatus();
+
     }
     public interface ITestStep
     {
@@ -23,12 +26,8 @@
         void SetTestLowLimit(string LL);
         void SetTestHighLimit(string UL);
         void SetFailure(string fail);
-        TestStep GetTestStep();
     }
-    
-    /// <summary>
-    /// Provides API essential for handling standard log files data flow on production floor. It is the base for data control and production supervision.
-    /// </summary>
+
     public class LogFile : ILogFile
     {
         #region Public properties
@@ -41,7 +40,7 @@
         /// <summary>
         /// List of test steps in standard txt log file.
         /// </summary>
-        public List<TestStep>? TestSteps { get; private set; } = new List<TestStep>();
+        public List<TestStep>? TestSteps { get; set; } = new List<TestStep>();
 
         /// <summary>
         /// Test date and time in DateTime format.
@@ -102,25 +101,33 @@
         /// <param name="path">Path to standard txt log file.</param>
         public LogFile(string path)
         {
-            this.Path = string.Empty;
-
-            if (Directory.Exists(path))
-                this.Path = path;
-
-            if (File.Exists(path))
+            try
             {
-                this.Path = path;
-                this.BoardSerialNumber = GetSerialNumber();
-                this.TestSteps = GetTestSteps();
-                this.BoardStatus = GetStatus();
-                this.TestDateAndTime = GetTestDateAndTime();
-                this.FailedStep = GetFailedStepData();
-                this.DateAndTimeOfTest = GetDateAndTimeString();
-                this.Station = GetStationName();
-                this.NumberOfLines = GetNumberOfLines();
-                this.TestingTime = GetBoardTestingTime();
-                this.TestSocketNumber = GetTestSocket();
+                this.Path = string.Empty;
+
+                if (Directory.Exists(path))
+                    this.Path = path;
+
+                if (File.Exists(path))
+                {
+                    this.Path = path;
+                    this.BoardSerialNumber = GetSerialNumber();
+                    this.TestSteps = GetTestSteps();
+                    this.BoardStatus = GetStatus();
+                    this.TestDateAndTime = GetTestDateAndTime();
+                    this.FailedStep = GetFailedStepData();
+                    this.DateAndTimeOfTest = GetDateAndTimeString();
+                    this.Station = GetStationName();
+                    this.NumberOfLines = GetNumberOfLines();
+                    this.TestingTime = GetBoardTestingTime();
+                    this.TestSocketNumber = GetTestSocket();
+                }
             }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+
         }
 
         /// <summary>
@@ -214,8 +221,7 @@
                         DateTime dt = ConvertDateAndTime(logFileData[0..2]);
 
                         // For each test step create new testStep object with data read from log file
-                        var testStep = new TestStep(logFileData[2], logFileData[3], dt, logFileData[4], logFileData[5], logFileData[6], logFileData[7], logFileData[8]);
-
+                        var testStep = new TestStep(logFileData[2], dt, logFileData[4], logFileData[3], logFileData[5], logFileData[6], logFileData[7], logFileData[8]);
                         // Add TestStep object to testSteps list if it has some valid information
                         if (testStep.TestName != null && testStep.TestStatus != null)
                             testSteps.Add(testStep);
@@ -232,7 +238,7 @@
         private string? GetStatus()
         {
             int passedTests = 0;
-            foreach (TestStep testStep in this.TestSteps)
+            foreach (TestStep testStep in this.TestSteps!)
             {
                 // If line contains specific "Pass" somwhere in test result string...
                 if (testStep.TestStatus.Contains("pass", StringComparison.OrdinalIgnoreCase))
@@ -241,7 +247,7 @@
             if (passedTests == this.TestSteps.Count && passedTests != 0)
                 return "Passed";
 
-            if (passedTests == 0)
+            if (this.TestSteps.Count == 0)
                 return null;
 
             return "Failed";
@@ -252,16 +258,16 @@
         /// </summary>
         /// <param name="dt">String array of date and time.</param>
         /// <returns>DateTime object representation of string date and time.</returns>
-        private DateTime ConvertDateAndTime(string[] dt)
+        private static DateTime ConvertDateAndTime(string[] dt)
         {
             //Determine if first element of array is date or time and convert it to DateTime object
             if (dt[0]?.Length == 10 && dt[1]?.Length == 8)
             {
                 // If date is first...
                 var year = Int32.Parse(dt[0].Substring(6, 4));
-                var month = Int32.Parse(dt[0].Substring(0, 2));
+                var month = Int32.Parse(dt[0][2..]);
                 var day = Int32.Parse(dt[0].Substring(3, 2));
-                var hour = Int32.Parse(dt[1].Substring(0, 2));
+                var hour = Int32.Parse(dt[1][..2]);
                 var minute = Int32.Parse(dt[1].Substring(3, 2));
                 var second = Int32.Parse(dt[1].Substring(6, 2));
 
@@ -272,9 +278,9 @@
             {
                 // If time is first...
                 var year = Int32.Parse(dt[1].Substring(6, 4));
-                var month = Int32.Parse(dt[1].Substring(0, 2));
+                var month = Int32.Parse(dt[1][..2]);
                 var day = Int32.Parse(dt[1].Substring(3, 2));
-                var hour = Int32.Parse(dt[0].Substring(0, 2));
+                var hour = Int32.Parse(dt[0][..2]);
                 var minute = Int32.Parse(dt[0].Substring(3, 2));
                 var second = Int32.Parse(dt[0].Substring(6, 2));
 
@@ -292,8 +298,8 @@
         {
             try
             {
-                var min = TestSteps.First().TestDateTime;
-                foreach (var testStep in this.TestSteps)
+                var min = TestSteps!.First().TestDateTime;
+                foreach (var testStep in this.TestSteps!)
                 {
                     if (testStep.TestDateTime < min)
                         min = testStep.TestDateTime;
@@ -323,7 +329,7 @@
         private string GetFailedStepData()
         {
             var failDetails = "";
-            foreach (var test in this.TestSteps)
+            foreach (var test in this.TestSteps!)
             {
                 // If line contains specific "Fail" somwhere in test result string...
                 if (test.TestStatus.Contains("fail", StringComparison.OrdinalIgnoreCase))
@@ -368,7 +374,7 @@
         {
             try
             {
-                return this.TestSteps.Last().TestDateTime - this.TestDateAndTime;
+                return this.TestSteps?.Last().TestDateTime - this.TestDateAndTime;
             }
             catch
             {
@@ -407,14 +413,14 @@
         /// Checks if all general data necessary for log file creation is present.
         /// </summary>
         /// <returns>True if data is ok.</returns>
-        private bool checkIfGeneralDataExists()
+        private bool CheckIfGeneralDataExists()
         {
             var allDataExists = true;
 
             if (String.IsNullOrEmpty(this.BoardSerialNumber)) allDataExists = false;
             if (String.IsNullOrEmpty(this.TestProgramFilePath)) allDataExists = false;
             if (String.IsNullOrEmpty(this.Station)) allDataExists = false;
-            if (this.TestSteps.Count == 0 || this.TestSteps == null) allDataExists = false;
+            if (this.TestSteps?.Count == 0 || this.TestSteps == null) allDataExists = false;
 
             return allDataExists;
         }
@@ -424,7 +430,7 @@
         /// </summary>
         /// <param name="ts">TestStep object.</param>
         /// <returns>True if data is ok.</returns>
-        private bool checkIfStepDataExists(TestStep ts)
+        private static bool CheckIfStepDataExists(TestStep ts)
         {
             var allDataExists = true;
 
@@ -439,69 +445,67 @@
 
         #region Public methods
 
-        public void AddTestStep(TestStep TS){this.TestSteps.Add(TS);}
-        public void SetTestDateAndTime(DateTime dt){this.TestDateAndTime = dt;}
-        public void SetBoardSerialNumber(string SN){this.BoardSerialNumber = SN;}
-        public void SetTestSocket(string sock){this.TestSocketNumber = sock;}
-        public void SetBoardStatus(string status){this.BoardStatus = status;}
-        public void SetFailureCause(string failure){this.FailedStep = failure;}
-        public void SetStationName(string station){this.Station = station;}
-        public void SetTestProgramPath(string path) { this.TestProgramFilePath = path; }
-
-        /// <summary>
-        /// Saves standard log file.
-        /// </summary>
-        /// <exception cref="Exception">Throws exception if some critical data is null or empty.</exception>
-        public string SaveLogFile()
+        public void AddTestStep(TestStep TS) => this.TestSteps?.Add(TS);
+        public void SetTestSteps(List<TestStep> TS) => this.TestSteps = TS;
+        public void SetTestDateAndTime(DateTime dt) => this.TestDateAndTime = dt;
+        public void SetBoardSerialNumber(string SN) => this.BoardSerialNumber = SN;
+        public void SetTestSocket(string sock) => this.TestSocketNumber = sock;
+        public void SetBoardStatus(string status) => this.BoardStatus = status;
+        public void SetFailureCause(string failure) => this.FailedStep = failure;
+        public void SetStationName(string station) => this.Station = station;
+        public void SetTestProgramPath(string path) => this.TestProgramFilePath = path; 
+        public string SaveLogFile(string path)
         {
-            if (!checkIfGeneralDataExists()) throw new Exception("Check if general data is ok!");
+            if (!CheckIfGeneralDataExists()) throw new Exception("Check if general data is ok!");
 
-            var logFileName = $"{this.TestDateAndTime.Month.ToString("00")}{this.TestDateAndTime.Day.ToString("00")}{this.TestDateAndTime.Year}_{this.TestDateAndTime.Hour.ToString("00")}{this.TestDateAndTime.Minute.ToString("00")}{this.TestDateAndTime.Second.ToString("00")}_{this.BoardSerialNumber}.txt";
-            var buffor = new List<string>();
-
-            buffor.Add($"PanelBarcode:\t{this.BoardSerialNumber}");
-            buffor.Add($"TestProgram:\t{this.TestProgramFilePath}");
-            buffor.Add($"TestProgramVer:\t{"1.0"}");
-            buffor.Add($"Operator:\t{this.Station}");
-            buffor.Add($"ImageBarcode:\t{this.BoardSerialNumber}");
-            buffor.Add($"");
-
-            foreach (var testStep in this.TestSteps)
+            var logFileName = $"{this.TestDateAndTime.Month:00}{this.TestDateAndTime.Day:00}{this.TestDateAndTime.Year}_{this.TestDateAndTime.Hour:00}{this.TestDateAndTime.Minute:00}{this.TestDateAndTime.Second:00}_{this.BoardSerialNumber}.txt";
+            var buffor = new List<string>
             {
-                if (!checkIfStepDataExists(testStep)) throw new Exception("Check if test step data is ok!");
+                $"PanelBarcode:\t{this.BoardSerialNumber}",
+                $"TestProgram:\t{this.TestProgramFilePath}",
+                $"TestProgramVer:\t{"1.0"}",
+                $"Operator:\t{this.Station}",
+                $"ImageBarcode:\t{this.BoardSerialNumber}",
+                $""
+            };
+
+            foreach (var testStep in this.TestSteps!)
+            {
+                if (!CheckIfStepDataExists(testStep)) throw new Exception("Check if test step data is ok!");
 
                 buffor.Add($"TestName:\t{testStep.TestName}");
-                if (testStep.TestType != "") 
+                if (!string.IsNullOrEmpty(testStep.TestType)) 
                     buffor.Add($"TestType:\t{testStep.TestType}");
-                buffor.Add($"Date:\t{testStep.TestDateTime.Month.ToString("00")}/{testStep.TestDateTime.Day.ToString("00")}/{testStep.TestDateTime.Year}");
-                buffor.Add($"Time:\t{testStep.TestDateTime.Hour.ToString("00")}:{testStep.TestDateTime.Minute.ToString("00")}:{testStep.TestDateTime.Second.ToString("00")}");
+                buffor.Add($"Date:\t{testStep.TestDateTime.Month:00}/{testStep.TestDateTime.Day:00}/{testStep.TestDateTime.Year}");
+                buffor.Add($"Time:\t{testStep.TestDateTime.Hour:00}:{testStep.TestDateTime.Minute:00}:{testStep.TestDateTime.Second:00}");
                 buffor.Add($"Result:\t{testStep.TestStatus}");
-                if (testStep.TestValue != "")
+                if (!string.IsNullOrEmpty(testStep.TestValue))
                     buffor.Add($"Value:\t{testStep.TestValue}");
-                if (testStep.ValueUnit != "")
+                if (!string.IsNullOrEmpty(testStep.ValueUnit))
                     buffor.Add($"Units:\t{testStep.ValueUnit}");
-                if (testStep.TestLL != "")
+                if (!string.IsNullOrEmpty(testStep.TestLL))
                     buffor.Add($"LowerLimit:\t{testStep.TestLL}");
-                if (testStep.TestUL != "")
+                if (!string.IsNullOrEmpty(testStep.TestUL))
                     buffor.Add($"UpperLimit:\t{testStep.TestUL}");
-                if (testStep.failure != "")
-                    buffor.Add($"FailDesc:\t{testStep.failure}");
+                if (!string.IsNullOrEmpty(testStep.Failure))
+                    buffor.Add($"FailDesc:\t{testStep.Failure}");
                 buffor.Add("~#~");
             }
 
-            var logFilePath = System.IO.Path.Combine(this.Path, logFileName);
+            var logFilePath = System.IO.Path.Combine(path, logFileName);
 
             File.AppendAllLines(logFilePath, buffor);
 
             return logFilePath;
         }
+        public string GetBoardStatus()
+        {
+            return BoardStatus!;
+        }
 
         #endregion
     }
 
-    /// <summary>
-    /// Describes single test step. E.g.: test status, lower limit, value.
-    /// </summary>
     public class TestStep : ITestStep
     {
         #region Properties
@@ -514,14 +518,14 @@
         public string ValueUnit { get; private set; } = string.Empty;
         public string TestLL { get; private set; } = string.Empty;
         public string TestUL { get; private set; } = string.Empty;
-        public bool isNumeric { get; private set; }
-        public string failure { get; private set; } = string.Empty;
+        public bool IsNumeric { get; private set; }
+        public string Failure { get; private set; } = string.Empty;
 
         #endregion
 
         #region Constructor
 
-        public TestStep(string testName, string testType, DateTime testDateTime, string testStatus, string testValue, string valueUnit, string testLL, string testUL)
+        public TestStep(string testName, DateTime testDateTime, string testStatus, string testType = "", string testValue = "", string valueUnit = "", string testLL = "", string testUL = "", string failure = "")
         {
             // Assign parameters to properties of class
             this.TestName = testName;
@@ -532,9 +536,10 @@
             this.ValueUnit = valueUnit;
             this.TestLL = testLL;
             this.TestUL = testUL;
+            this.Failure = failure;
 
             // Evaluate test type
-            this.isNumeric = EvaluateTestType();
+            this.IsNumeric = EvaluateTestType();
         }
 
         public TestStep()
@@ -552,8 +557,6 @@
         /// <returns>True if test step is numeric and can be used for MSA. Returns false if test step is of pass/fail or string type.</returns>
         private bool EvaluateTestType()
         {
-            // Try to convert TestValue to float and check if limits are different.
-            // If conversion succeed and limits are different - return true. If conversion fails or limits are the same - return false.
             return float.TryParse(this.TestValue, out _) && (this.TestLL != this.TestUL);
         }
 
@@ -569,8 +572,8 @@
         public void SetValueUnit(string valueUnit){this.ValueUnit = valueUnit;}
         public void SetTestLowLimit(string LL){this.TestLL = LL;}
         public void SetTestHighLimit(string UL){this.TestUL = UL;}
-        public void SetFailure(string fail){this.failure = fail;}
-        public TestStep GetTestStep() { return this;}
+        public void SetFailure(string fail){this.Failure = fail;}
+        
         #endregion
     }
 }
