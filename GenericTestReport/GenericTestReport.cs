@@ -3,6 +3,19 @@
     public interface ILogFile
     {
         string SaveLogFile(string path);
+        public int Id { get; }
+        public string? Workstation { get; set; }
+        public string? SerialNumber { get; set; }
+        public string Status { get; set; }
+        public string? FixtureSocket { get; set; }
+        public string? Failure { get; set; }
+        public string? Operator { get; set; }
+        public string? TestProgramFilePath { get; set; }
+        public List<TestStep>? TestSteps { get; set; }
+        public TimeSpan? TestingTime { get; set; }
+        public DateTime RecordCreated { get; set; }
+        public DateTime TestDateTimeStarted { get; set; }
+
     }
     public interface ITestStep
     {
@@ -20,7 +33,6 @@
     public class LogFile : AuditableModel, ILogFile
     {
         #region Public properties
-
         public int Id { get; private set; }
         public string? Workstation { get; set; }
         public string? SerialNumber { get; set; }
@@ -50,7 +62,7 @@
                 TestDateTimeStarted = GetTestDateAndTime();
                 Failure = GetFailedStepData();
                 Workstation = GetStationName(text);
-                TestingTime = GetBoardTestingTime();
+                TestingTime = GetBoardTestingTime(path);
                 FixtureSocket = GetTestSocket(text);
                 TestProgramFilePath = GetTestProgramFilePath(text);
             }
@@ -186,7 +198,7 @@
             {
                 // If date is first...
                 var year = Int32.Parse(dt[0].Substring(6, 4));
-                var month = Int32.Parse(dt[0][2..]);
+                var month = Int32.Parse(dt[0][..2]);
                 var day = Int32.Parse(dt[0].Substring(3, 2));
                 var hour = Int32.Parse(dt[1][..2]);
                 var minute = Int32.Parse(dt[1].Substring(3, 2));
@@ -273,11 +285,14 @@
         /// Gets testing time of the board being difference between first and last test step date and time.
         /// </summary>
         /// <returns>Testing time.</returns>
-        private TimeSpan? GetBoardTestingTime()
+        private TimeSpan? GetBoardTestingTime(string path)
         {
+            var minTime = TestSteps.Min(x => x.TestDateTime);
+            var maxTime = TestSteps.Max(x=> x.TestDateTime);
+
             try
             {
-                return TestSteps?.Last().TestDateTime - TestDateTimeStarted;
+                return maxTime-minTime;
             }
             catch
             {
@@ -361,6 +376,7 @@
         #endregion
 
         #region Public methods
+
         public string SaveLogFile(string path)
         {
             if (!CheckIfGeneralDataExists()) throw new Exception("Check if general data is ok!");
@@ -405,7 +421,6 @@
 
             return logFilePath;
         }
-
         #endregion
     }
 
