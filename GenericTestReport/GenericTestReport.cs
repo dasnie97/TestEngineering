@@ -1,47 +1,22 @@
-﻿namespace GenericTestReport
+﻿using GenericTestReport.Interfaces;
+
+namespace GenericTestReport
 {
-    public interface ILogFile
-    {
-        string SaveLogFile(string path);
-        public int Id { get; }
-        public string? Workstation { get; set; }
-        public string? SerialNumber { get; set; }
-        public string Status { get; set; }
-        public string? FixtureSocket { get; set; }
-        public string? Failure { get; set; }
-        public string? Operator { get; set; }
-        public string? TestProgramFilePath { get; set; }
-        public List<TestStep>? TestSteps { get; set; }
-        public TimeSpan? TestingTime { get; set; }
-        public DateTime RecordCreated { get; set; }
-        public DateTime TestDateTimeStarted { get; set; }
-
-    }
-    public interface ITestStep
-    {
-        void SetTestName(string testName);
-        void SetTestType(string testType);
-        void SetTestDateTime(DateTime testDT);
-        void SetTestStatus(string testStatus);
-        void SetTestValue(string testValue);
-        void SetValueUnit(string valueUnit);
-        void SetTestLowLimit(string LL);
-        void SetTestHighLimit(string UL);
-        void SetFailure(string fail);
-    }
-
-    public class LogFile : AuditableModel, ILogFile
+    public class LogFile : ILogFile<TestStep>
     {
         #region Public properties
         public int Id { get; private set; }
-        public string? Workstation { get; set; }
-        public string? SerialNumber { get; set; }
+        public string Workstation { get; set; }
+        public string SerialNumber { get; set; }
         public string? FixtureSocket { get; set; }
         public string? Failure { get; set; }
         public string? Operator { get; set; }
         public string? TestProgramFilePath { get; set; }
         public List<TestStep>? TestSteps { get; set; }
         public TimeSpan? TestingTime { get; set; }
+        public string Status { get; set; }
+        public DateTime TestDateTimeStarted { get; set; }
+
 
         #endregion
 
@@ -231,11 +206,11 @@
         {
             try
             {
-                var min = TestSteps!.First().TestDateTime;
+                var min = TestSteps!.First().TestDateTimeFinish;
                 foreach (var testStep in this.TestSteps!)
                 {
-                    if (testStep.TestDateTime < min)
-                        min = testStep.TestDateTime;
+                    if (testStep.TestDateTimeFinish < min)
+                        min = testStep.TestDateTimeFinish;
                 }
                 return min;
             }
@@ -257,7 +232,7 @@
             {
                 // If line contains specific "Fail" somwhere in test result string...
                 if (test.TestStatus.Contains("fail", StringComparison.OrdinalIgnoreCase))
-                    failDetails = $"{test.TestName}\nValue measured: {test.TestValue}\nLower limit: {test.TestLL}\nUpper limit: {test.TestUL}";
+                    failDetails = $"{test.TestName}\nValue measured: {test.TestValue}\nLower limit: {test.TestLowerLimit}\nUpper limit: {test.TestUpperLimit}";
             }
             return failDetails;
         }
@@ -287,8 +262,8 @@
         /// <returns>Testing time.</returns>
         private TimeSpan? GetBoardTestingTime(string path)
         {
-            var minTime = TestSteps.Min(x => x.TestDateTime);
-            var maxTime = TestSteps.Max(x=> x.TestDateTime);
+            var minTime = TestSteps.Min(x => x.TestDateTimeFinish);
+            var maxTime = TestSteps.Max(x=> x.TestDateTimeFinish);
 
             try
             {
@@ -362,12 +337,12 @@
         /// </summary>
         /// <param name="ts">TestStep object.</param>
         /// <returns>True if data is ok.</returns>
-        private static bool CheckIfStepDataExists(TestStep ts)
+        private static bool CheckIfStepDataExists(ITestStep ts)
         {
             var allDataExists = true;
 
             if (String.IsNullOrEmpty(ts.TestName)) allDataExists = false;
-            if (ts.TestDateTime == new DateTime(0)) allDataExists = false;
+            if (ts.TestDateTimeFinish == new DateTime(0)) allDataExists = false;
             if (String.IsNullOrEmpty(ts.TestStatus)) allDataExists = false;
 
             return allDataExists;
@@ -376,7 +351,6 @@
         #endregion
 
         #region Public methods
-
         public string SaveLogFile(string path)
         {
             if (!CheckIfGeneralDataExists()) throw new Exception("Check if general data is ok!");
@@ -399,17 +373,17 @@
                 buffor.Add($"TestName:\t{testStep.TestName}");
                 if (!string.IsNullOrEmpty(testStep.TestType)) 
                     buffor.Add($"TestType:\t{testStep.TestType}");
-                buffor.Add($"Date:\t{testStep.TestDateTime.Month:00}/{testStep.TestDateTime.Day:00}/{testStep.TestDateTime.Year}");
-                buffor.Add($"Time:\t{testStep.TestDateTime.Hour:00}:{testStep.TestDateTime.Minute:00}:{testStep.TestDateTime.Second:00}");
+                buffor.Add($"Date:\t{testStep.TestDateTimeFinish.Month:00}/{testStep.TestDateTimeFinish.Day:00}/{testStep.TestDateTimeFinish.Year}");
+                buffor.Add($"Time:\t{testStep.TestDateTimeFinish.Hour:00}:{testStep.TestDateTimeFinish.Minute:00}:{testStep.TestDateTimeFinish.Second:00}");
                 buffor.Add($"Result:\t{testStep.TestStatus}");
                 if (!string.IsNullOrEmpty(testStep.TestValue))
                     buffor.Add($"Value:\t{testStep.TestValue}");
                 if (!string.IsNullOrEmpty(testStep.ValueUnit))
                     buffor.Add($"Units:\t{testStep.ValueUnit}");
-                if (!string.IsNullOrEmpty(testStep.TestLL))
-                    buffor.Add($"LowerLimit:\t{testStep.TestLL}");
-                if (!string.IsNullOrEmpty(testStep.TestUL))
-                    buffor.Add($"UpperLimit:\t{testStep.TestUL}");
+                if (!string.IsNullOrEmpty(testStep.TestLowerLimit))
+                    buffor.Add($"LowerLimit:\t{testStep.TestLowerLimit}");
+                if (!string.IsNullOrEmpty(testStep.TestUpperLimit))
+                    buffor.Add($"UpperLimit:\t{testStep.TestUpperLimit}");
                 if (!string.IsNullOrEmpty(testStep.Failure))
                     buffor.Add($"FailDesc:\t{testStep.Failure}");
                 buffor.Add("~#~");
@@ -417,7 +391,8 @@
 
             var logFilePath = Path.Combine(path, logFileName);
 
-            File.AppendAllLines(logFilePath, buffor);
+            File.WriteAllLines(logFilePath, buffor);
+            //File.AppendAllLines(logFilePath, buffor);
 
             return logFilePath;
         }
@@ -430,12 +405,12 @@
 
         public string TestName { get; private set; } = string.Empty;
         public string TestType { get; private set; } = string.Empty;
-        public DateTime TestDateTime { get; private set; }
+        public DateTime TestDateTimeFinish { get; private set; }
         public string TestStatus { get; private set; } = string.Empty;
         public string TestValue { get; private set; } = string.Empty;
         public string ValueUnit { get; private set; } = string.Empty;
-        public string TestLL { get; private set; } = string.Empty;
-        public string TestUL { get; private set; } = string.Empty;
+        public string TestLowerLimit { get; private set; } = string.Empty;
+        public string TestUpperLimit { get; private set; } = string.Empty;
         public bool IsNumeric { get; private set; }
         public string Failure { get; private set; } = string.Empty;
 
@@ -448,12 +423,12 @@
             // Assign parameters to properties of class
             this.TestName = testName;
             this.TestType = testType;
-            this.TestDateTime = testDateTime;
+            this.TestDateTimeFinish = testDateTime;
             this.TestStatus = testStatus;
             this.TestValue = testValue;
             this.ValueUnit = valueUnit;
-            this.TestLL = testLL;
-            this.TestUL = testUL;
+            this.TestLowerLimit = testLL;
+            this.TestUpperLimit = testUL;
             this.Failure = failure;
 
             // Evaluate test type
@@ -475,7 +450,7 @@
         /// <returns>True if test step is numeric and can be used for MSA. Returns false if test step is of pass/fail or string type.</returns>
         private bool EvaluateTestType()
         {
-            return float.TryParse(this.TestValue, out _) && (this.TestLL != this.TestUL);
+            return float.TryParse(this.TestValue, out _) && (this.TestLowerLimit != this.TestUpperLimit);
         }
 
         #endregion
@@ -484,12 +459,12 @@
 
         public void SetTestName(string testName){this.TestName = testName;}
         public void SetTestType(string testType){this.TestType = testType;}
-        public void SetTestDateTime(DateTime testDT){this.TestDateTime = testDT;}
+        public void SetTestDateTime(DateTime testDT){this.TestDateTimeFinish = testDT;}
         public void SetTestStatus(string testStatus){this.TestStatus = testStatus;}
         public void SetTestValue(string testValue){this.TestValue = testValue;}
         public void SetValueUnit(string valueUnit){this.ValueUnit = valueUnit;}
-        public void SetTestLowLimit(string LL){this.TestLL = LL;}
-        public void SetTestHighLimit(string UL){this.TestUL = UL;}
+        public void SetTestLowLimit(string LL){this.TestLowerLimit = LL;}
+        public void SetTestHighLimit(string UL){this.TestUpperLimit = UL;}
         public void SetFailure(string fail){this.Failure = fail;}
         
         #endregion
