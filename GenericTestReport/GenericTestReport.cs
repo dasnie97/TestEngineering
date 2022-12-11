@@ -5,16 +5,15 @@ namespace GenericTestReport
     public class LogFile : ILogFile<TestStep>
     {
         #region Public properties
-        public int Id { get; private set; }
-        public string Workstation { get; set; }
-        public string SerialNumber { get; set; }
+        public string Workstation { get; set; } = string.Empty;
+        public string SerialNumber { get; set; } = string.Empty;
         public string? FixtureSocket { get; set; }
-        public string? Failure { get; set; }
+        public string Failure { get; set; } = string.Empty;
         public string? Operator { get; set; }
         public string? TestProgramFilePath { get; set; }
         public List<TestStep>? TestSteps { get; set; }
         public TimeSpan? TestingTime { get; set; }
-        public string Status { get; set; }
+        public string Status { get; set; } = string.Empty;
         public DateTime TestDateTimeStarted { get; set; }
 
 
@@ -37,7 +36,7 @@ namespace GenericTestReport
                 TestDateTimeStarted = GetTestDateAndTime();
                 Failure = GetFailedStepData();
                 Workstation = GetStationName(text);
-                TestingTime = GetBoardTestingTime(path);
+                TestingTime = GetBoardTestingTime();
                 FixtureSocket = GetTestSocket(text);
                 TestProgramFilePath = GetTestProgramFilePath(text);
             }
@@ -146,7 +145,8 @@ namespace GenericTestReport
         private string GetStatus()
         {
             int passedTests = 0;
-            foreach (TestStep testStep in this.TestSteps!)
+            if (TestSteps == null) return "Failed";
+            foreach (ITestStep testStep in TestSteps)
             {
                 // If line contains specific "Pass" somwhere in test result string...
                 if (testStep.TestStatus.Contains("pass", StringComparison.OrdinalIgnoreCase))
@@ -260,8 +260,9 @@ namespace GenericTestReport
         /// Gets testing time of the board being difference between first and last test step date and time.
         /// </summary>
         /// <returns>Testing time.</returns>
-        private TimeSpan? GetBoardTestingTime(string path)
+        private TimeSpan? GetBoardTestingTime()
         {
+            if (TestSteps == null) return null;
             var minTime = TestSteps.Min(x => x.TestDateTimeFinish);
             var maxTime = TestSteps.Max(x=> x.TestDateTimeFinish);
 
