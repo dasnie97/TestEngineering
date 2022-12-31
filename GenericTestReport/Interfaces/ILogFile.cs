@@ -5,9 +5,10 @@
         public string Workstation { get; set; }
         public string SerialNumber { get; set; }
         public string Status { get; set; }
+        public bool IsFirstPass { get; set; }
+        public bool FalseCall { get; set; }
         public string? FixtureSocket { get; set; }
         public string Failure { get; set; }
-        public string? Operator { get; set; }
         public string? TestProgramFilePath { get; set; }
         public List<T>? TestSteps { get; set; }
         public TimeSpan? TestingTime { get; set; }

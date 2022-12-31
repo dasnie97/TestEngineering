@@ -7,13 +7,14 @@ namespace GenericTestReport
         #region Public properties
         public string Workstation { get; set; } = string.Empty;
         public string SerialNumber { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public bool IsFirstPass { get; set; }
+        public bool FalseCall { get; set; }
         public string? FixtureSocket { get; set; }
         public string Failure { get; set; } = string.Empty;
-        public string? Operator { get; set; }
         public string? TestProgramFilePath { get; set; }
         public List<TestStep>? TestSteps { get; set; }
         public TimeSpan? TestingTime { get; set; }
-        public string Status { get; set; } = string.Empty;
         public DateTime TestDateTimeStarted { get; set; }
 
 
