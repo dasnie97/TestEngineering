@@ -5,54 +5,56 @@ namespace ProductTest;
 
 public class TestReport : TestReportBase, ITestReport
 {
-    //TODO: figure out how to set one of constructors in base class.
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="path">Path to existing test report file.</param>
-    public TestReport(string path)
+    public static TestReport CreateFromFile(string path)
     {
         if (File.Exists(path))
         {
-            var text = File.ReadAllLines(path);
-            SerialNumber = GetSerialNumber(text);
-            TestSteps = GetTestSteps(path);
-            Status = GetStatus();
-            TestDateTimeStarted = GetTestDateAndTime();
-            Failure = GetFailedStepData();
-            Workstation = GetStationName(text);
-            TestingTime = GetBoardTestingTime();
-            FixtureSocket = GetTestSocket(text);
+            return new TestReport(path);
         }
         else
         {
-            throw new FileNotFoundException();
+            throw new FileNotFoundException("File not found", path);
         }
     }
 
-    public TestReport(
-    string serialNumber,
-    string workstation,
-    DateTime testStarted,
-    IEnumerable<TestStep> testSteps,
-    string failure = "",
-    string fixtureSocket = "",
-    TimeSpan? testingTime = null
-    )
+    private TestReport(string path) : base(string.Empty,string.Empty, string.Empty, DateTime.MinValue, new List<TestStep>())
     {
-        SerialNumber = serialNumber;
-        Workstation = new Workstation(workstation);
-        TestDateTimeStarted = testStarted;
-        TestSteps = testSteps;
-        Failure = failure;
-        FixtureSocket = fixtureSocket;
-        TestingTime = testingTime;
+        var text = File.ReadAllLines(path);
+        SerialNumber = GetSerialNumber(text);
+        TestSteps = GetTestSteps(path);
+        Status = GetStatus();
+        TestDateTimeStarted = GetTestDateAndTime();
+        Failure = GetFailedStepData();
+        Workstation = GetStationName(text);
+        TestingTime = GetBoardTestingTime();
+        FixtureSocket = GetTestSocket(text);
     }
-    /// <summary>
-    /// 
-    /// </summary>
+
+    public static TestReport Create(string serialNumber,
+                                    string status,     
+                                    string workstation,
+                                    DateTime testStarted,
+                                    IEnumerable<TestStep> testSteps,
+                                    string failure = "",
+                                    string fixtureSocket = "",
+                                    TimeSpan? testingTime = null)
+    {
+        return new TestReport(serialNumber, status, workstation, testStarted, testSteps, failure, fixtureSocket, testingTime);
+    }
+
+    private TestReport(string serialNumber,
+                        string status, 
+                        string workstation,
+                        DateTime testStarted,
+                        IEnumerable<TestStep> testSteps,
+                        string failure = "",
+                        string fixtureSocket = "",
+                        TimeSpan? testingTime = null
+    ) : base(serialNumber, status, workstation,testStarted,testSteps,failure,fixtureSocket,testingTime)
+    {    }
+
     /// <param name="directoryPath">Output directory where test report should be saved.</param>
-    /// <returns></returns>
+    /// <returns>Path to created report.</returns>
     public string SaveReport(string directoryPath)
     {
         var logFileName = $"{TestDateTimeStarted.Month:00}{TestDateTimeStarted.Day:00}{TestDateTimeStarted.Year}_{TestDateTimeStarted.Hour:00}{TestDateTimeStarted.Minute:00}{TestDateTimeStarted.Second:00}_{SerialNumber}.txt";
@@ -68,20 +70,20 @@ public class TestReport : TestReportBase, ITestReport
 
         foreach (TestStepBase testStep in TestSteps)
         {
-            buffor.Add($"TestName:\t{testStep.TestName}");
-            if (!string.IsNullOrEmpty(testStep.TestType))
-                buffor.Add($"TestType:\t{testStep.TestType}");
-            buffor.Add($"Date:\t{testStep.TestDateTimeFinish.Month:00}/{testStep.TestDateTimeFinish.Day:00}/{testStep.TestDateTimeFinish.Year}");
-            buffor.Add($"Time:\t{testStep.TestDateTimeFinish.Hour:00}:{testStep.TestDateTimeFinish.Minute:00}:{testStep.TestDateTimeFinish.Second:00}");
-            buffor.Add($"Result:\t{testStep.TestStatus}");
-            if (!string.IsNullOrEmpty(testStep.TestValue))
-                buffor.Add($"Value:\t{testStep.TestValue}");
-            if (!string.IsNullOrEmpty(testStep.ValueUnit))
-                buffor.Add($"Units:\t{testStep.ValueUnit}");
-            if (!string.IsNullOrEmpty(testStep.TestLowerLimit))
-                buffor.Add($"LowerLimit:\t{testStep.TestLowerLimit}");
-            if (!string.IsNullOrEmpty(testStep.TestUpperLimit))
-                buffor.Add($"UpperLimit:\t{testStep.TestUpperLimit}");
+            buffor.Add($"TestName:\t{testStep.Name}");
+            if (!string.IsNullOrEmpty(testStep.Type))
+                buffor.Add($"TestType:\t{testStep.Type}");
+            buffor.Add($"Date:\t{testStep.DateTimeFinish.Month:00}/{testStep.DateTimeFinish.Day:00}/{testStep.DateTimeFinish.Year}");
+            buffor.Add($"Time:\t{testStep.DateTimeFinish.Hour:00}:{testStep.DateTimeFinish.Minute:00}:{testStep.DateTimeFinish.Second:00}");
+            buffor.Add($"Result:\t{testStep.Status}");
+            if (!string.IsNullOrEmpty(testStep.Value))
+                buffor.Add($"Value:\t{testStep.Value}");
+            if (!string.IsNullOrEmpty(testStep.Unit))
+                buffor.Add($"Units:\t{testStep.Unit}");
+            if (!string.IsNullOrEmpty(testStep.LowerLimit))
+                buffor.Add($"LowerLimit:\t{testStep.LowerLimit}");
+            if (!string.IsNullOrEmpty(testStep.UpperLimit))
+                buffor.Add($"UpperLimit:\t{testStep.UpperLimit}");
             if (!string.IsNullOrEmpty(testStep.Failure))
                 buffor.Add($"FailDesc:\t{testStep.Failure}");
             buffor.Add("~#~");
@@ -121,11 +123,8 @@ public class TestReport : TestReportBase, ITestReport
             for (int i = 0; i < splittedTestCase.Length; i++)
             {
                 if (splittedTestCase[i].Contains("Date:")) logFileData[0] = splittedTestCase[i].Split("\t", StringSplitOptions.None)[1].Trim();
-                else throw new Exception($"Date field is missing in file {path}!");
                 if (splittedTestCase[i].Contains("Time:")) logFileData[1] = splittedTestCase[i].Split("\t", StringSplitOptions.None)[1].Trim();
-                else throw new Exception($"Time field is missing in file {path}!");
                 if (splittedTestCase[i].Contains("TestName:")) logFileData[2] = splittedTestCase[i].Split("\t", StringSplitOptions.None)[1].Trim();
-                else throw new Exception($"Test name field is missing in file {path}!");
                 if (splittedTestCase[i].Contains("TestType:"))
                     logFileData[3] = splittedTestCase[i].Split("\t", StringSplitOptions.None)[1].Trim();
                 if (splittedTestCase[i].Contains("Result:"))
@@ -133,7 +132,6 @@ public class TestReport : TestReportBase, ITestReport
                     string bufor = splittedTestCase[i].Split("\t", StringSplitOptions.None)[1].Trim().ToLower();
                     logFileData[4] = string.Concat(bufor[0].ToString().ToUpper(), bufor.AsSpan(1));
                 }
-                else throw new Exception($"Result field is missing in file {path}!");
                 if (splittedTestCase[i].Contains("Value:"))
                     logFileData[5] = splittedTestCase[i].Split("\t", StringSplitOptions.None)[1].Trim();
                 if (splittedTestCase[i].Contains("Units:"))
@@ -147,8 +145,8 @@ public class TestReport : TestReportBase, ITestReport
                 {
                     DateTime dt = ConvertDateAndTime(logFileData[0..2]);
 
-                    var testStep = new TestStep(logFileData[2], dt, logFileData[4], logFileData[3], logFileData[5], logFileData[6], logFileData[7], logFileData[8]);
-                    if (testStep.TestName != null && testStep.TestStatus != null)
+                    var testStep = TestStep.Create(logFileData[2], dt, logFileData[4], logFileData[3], logFileData[5], logFileData[6], logFileData[7], logFileData[8]);
+                    if (testStep.Name != null && testStep.Status != null)
                         testSteps.Add(testStep);
                 }
             }
@@ -185,13 +183,13 @@ public class TestReport : TestReportBase, ITestReport
         }
         return new DateTime(0);
     }
-    private TestStatus GetStatus()
+    private string GetStatus()
     {
         int passedTests = 0;
         if (TestSteps == null) return TestStatus.Failed;
         foreach (TestStepBase testStep in TestSteps)
         {
-            if (testStep.TestStatus.Contains("pass", StringComparison.OrdinalIgnoreCase))
+            if (testStep.Status.Contains("pass", StringComparison.OrdinalIgnoreCase))
                 passedTests++;
         }
         if (passedTests == TestSteps.Count() && passedTests != 0)
@@ -206,11 +204,11 @@ public class TestReport : TestReportBase, ITestReport
     {
         try
         {
-            var min = TestSteps.First().TestDateTimeFinish;
+            var min = TestSteps.First().DateTimeFinish;
             foreach (var testStep in this.TestSteps!)
             {
-                if (testStep.TestDateTimeFinish < min)
-                    min = testStep.TestDateTimeFinish;
+                if (testStep.DateTimeFinish < min)
+                    min = testStep.DateTimeFinish;
             }
             return min;
         }
@@ -224,8 +222,8 @@ public class TestReport : TestReportBase, ITestReport
         var failDetails = "";
         foreach (var test in TestSteps)
         {
-            if (test.TestStatus.Contains("fail", StringComparison.OrdinalIgnoreCase))
-                failDetails = $"{test.TestName}\nValue measured: {test.TestValue}\nLower limit: {test.TestLowerLimit}\nUpper limit: {test.TestUpperLimit}";
+            if (test.Status.Contains("fail", StringComparison.OrdinalIgnoreCase))
+                failDetails = $"{test.Name}\nValue measured: {test.Value}\nLower limit: {test.LowerLimit}\nUpper limit: {test.UpperLimit}";
         }
         return failDetails;
     }
@@ -247,8 +245,8 @@ public class TestReport : TestReportBase, ITestReport
     private TimeSpan? GetBoardTestingTime()
     {
         if (TestSteps == null) return null;
-        var minTime = TestSteps.Min(x => x.TestDateTimeFinish);
-        var maxTime = TestSteps.Max(x => x.TestDateTimeFinish);
+        var minTime = TestSteps.Min(testStep => testStep.DateTimeFinish);
+        var maxTime = TestSteps.Max(testStep => testStep.DateTimeFinish);
         try
         {
             return maxTime - minTime;
