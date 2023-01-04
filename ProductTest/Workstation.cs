@@ -4,8 +4,6 @@ namespace ProductTest;
 
 public class Workstation : WorkstationBase
 {
-    public Workstation(string name)
-    {
-        Name = name;
-    }
+    public Workstation(string name) : base(name)
+    {}
 }
