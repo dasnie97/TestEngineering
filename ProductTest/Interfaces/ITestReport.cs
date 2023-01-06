@@ -2,5 +2,5 @@
 
 public interface ITestReport
 {
-    public string SaveReport(string directoryPath);
+    public FileInfo SaveReport(string outputDirectory);
 }
