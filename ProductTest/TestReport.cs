@@ -19,15 +19,15 @@ public class TestReport : TestReportBase, ITestReport
 
     private TestReport(string path) : base(string.Empty,string.Empty, string.Empty, DateTime.MinValue, new List<TestStep>())
     {
-        var text = File.ReadAllLines(path);
-        SerialNumber = GetSerialNumber(text);
-        TestSteps = GetTestSteps(path);
-        Status = GetStatus();
-        TestDateTimeStarted = GetTestDateAndTime();
-        Failure = GetFailedStepData();
-        Workstation = GetStationName(text);
-        TestingTime = GetBoardTestingTime();
-        FixtureSocket = GetTestSocket(text);
+        var linesOfText = File.ReadAllLines(path);
+        SetSerialNumber(linesOfText);
+        SetTestSteps(path);
+        SetStatus();
+        SetTestDateAndTime();
+        SetFailedStepData();
+        SetStationName(linesOfText);
+        SetBoardTestingTime();
+        SetTestSocket(linesOfText);
     }
 
     public static TestReport Create(string serialNumber,
@@ -53,9 +53,7 @@ public class TestReport : TestReportBase, ITestReport
     ) : base(serialNumber, status, workstation,testStarted,testSteps,failure,fixtureSocket,testingTime)
     {    }
 
-    /// <param name="directoryPath">Output directory where test report should be saved.</param>
-    /// <returns>Path to created report.</returns>
-    public string SaveReport(string directoryPath)
+    public FileInfo SaveReport(string directoryPath)
     {
         var logFileName = $"{TestDateTimeStarted.Month:00}{TestDateTimeStarted.Day:00}{TestDateTimeStarted.Year}_{TestDateTimeStarted.Hour:00}{TestDateTimeStarted.Minute:00}{TestDateTimeStarted.Second:00}_{SerialNumber}.txt";
         var buffor = new List<string>
@@ -90,16 +88,14 @@ public class TestReport : TestReportBase, ITestReport
         }
 
         var logFilePath = Path.Combine(directoryPath, logFileName);
-
         File.WriteAllLines(logFilePath, buffor);
-
-        return logFilePath;
+        return new FileInfo(logFilePath);
     }
 
-    private static string GetSerialNumber(IEnumerable<string> text)
+    private void SetSerialNumber(IEnumerable<string> linesOfText)
     {
         var serialNumber = string.Empty;
-        foreach (string line in text)
+        foreach (string line in linesOfText)
         {
             if (line.Contains("PanelBarcode:") || line.Contains("ImageBarcode:"))
             {
@@ -109,9 +105,9 @@ public class TestReport : TestReportBase, ITestReport
             }
         }
         if (serialNumber == string.Empty) throw new Exception("Serial number is missing!");
-        else return serialNumber;
+        else SerialNumber = serialNumber;
     }
-    private static List<TestStep> GetTestSteps(string path)
+    private void SetTestSteps(string path)
     {
         var testSteps = new List<TestStep>();
         string logFileText = File.ReadAllText(path);
@@ -151,7 +147,7 @@ public class TestReport : TestReportBase, ITestReport
                 }
             }
         }
-        return testSteps;
+        TestSteps = testSteps;
     }
     private static DateTime ConvertDateAndTime(string[] dt)
     {
@@ -183,24 +179,24 @@ public class TestReport : TestReportBase, ITestReport
         }
         return new DateTime(0);
     }
-    private string GetStatus()
+    private void SetStatus()
     {
         int passedTests = 0;
-        if (TestSteps == null) return TestStatus.Failed;
+        if (TestSteps == null) Status = TestStatus.Failed;
         foreach (TestStepBase testStep in TestSteps)
         {
             if (testStep.Status.Contains("pass", StringComparison.OrdinalIgnoreCase))
                 passedTests++;
         }
         if (passedTests == TestSteps.Count() && passedTests != 0)
-            return TestStatus.Passed;
+            Status = TestStatus.Passed;
 
         if (TestSteps.Count() == 0)
             throw new Exception("Log file has no test steps!");
 
-        return TestStatus.Failed;
+        Status = TestStatus.Failed;
     }
-    private DateTime GetTestDateAndTime()
+    private void SetTestDateAndTime()
     {
         try
         {
@@ -210,14 +206,14 @@ public class TestReport : TestReportBase, ITestReport
                 if (testStep.DateTimeFinish < min)
                     min = testStep.DateTimeFinish;
             }
-            return min;
+            TestDateTimeStarted = min;
         }
         catch
         {
-            return DateTime.MinValue;
+            TestDateTimeStarted = DateTime.MinValue;
         }
     }
-    private string GetFailedStepData()
+    private void SetFailedStepData()
     {
         var failDetails = "";
         foreach (var test in TestSteps)
@@ -225,12 +221,12 @@ public class TestReport : TestReportBase, ITestReport
             if (test.Status.Contains("fail", StringComparison.OrdinalIgnoreCase))
                 failDetails = $"{test.Name}\nValue measured: {test.Value}\nLower limit: {test.LowerLimit}\nUpper limit: {test.UpperLimit}";
         }
-        return failDetails;
+        Failure = failDetails;
     }
-    private static Workstation GetStationName(IEnumerable<string> text)
+    private void SetStationName(IEnumerable<string> linesOfText)
     {
         var workstation = string.Empty;
-        foreach (string line in text)
+        foreach (string line in linesOfText)
         {
             if (line.Contains("Operator:"))
             {
@@ -240,27 +236,26 @@ public class TestReport : TestReportBase, ITestReport
             }
         }
         if (workstation == string.Empty) throw new Exception("Operator field is missing!");
-        else return new Workstation(workstation);
+        else Workstation = new Workstation(workstation);
     }
-    private TimeSpan? GetBoardTestingTime()
+    private void SetBoardTestingTime()
     {
-        if (TestSteps == null) return null;
-        var minTime = TestSteps.Min(testStep => testStep.DateTimeFinish);
-        var maxTime = TestSteps.Max(testStep => testStep.DateTimeFinish);
         try
         {
-            return maxTime - minTime;
+            var minTime = TestSteps.Min(testStep => testStep.DateTimeFinish);
+            var maxTime = TestSteps.Max(testStep => testStep.DateTimeFinish);
+            TestingTime = maxTime - minTime;
         }
         catch
         {
-            return null;
+            TestingTime = null;
         }
     }
-    private static string GetTestSocket(IEnumerable<string> text)
+    private void SetTestSocket(IEnumerable<string> linesOfText)
     {
         bool dataAhead = false;
 
-        foreach (string line in text)
+        foreach (string line in linesOfText)
         {
             if (line.Contains("Test Socket Number"))
                 dataAhead = true;
@@ -269,11 +264,11 @@ public class TestReport : TestReportBase, ITestReport
                 if (line.Contains("Value"))
                 {
                     string[] SplittedLine = line.Split("\t", StringSplitOptions.None);
-                    return SplittedLine[1];
+                    FixtureSocket = SplittedLine[1];
                 }
             }
         }
-        return "";
+        FixtureSocket = "";
     }
 
     //private static string GetTestProgramFilePath(IEnumerable<string> text)
