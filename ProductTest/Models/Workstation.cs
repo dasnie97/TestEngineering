@@ -1,9 +1,9 @@
 ﻿using ProductTest.Common;
 
-namespace ProductTest;
+namespace ProductTest.Models;
 
 public class Workstation : WorkstationBase
 {
     public Workstation(string name) : base(name)
-    {}
+    { }
 }

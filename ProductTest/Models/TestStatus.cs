@@ -1,4 +1,4 @@
-﻿namespace ProductTest;
+﻿namespace ProductTest.Models;
 
 public class TestStatus
 {
