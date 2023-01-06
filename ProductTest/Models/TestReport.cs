@@ -1,7 +1,7 @@
 ﻿using ProductTest.Common;
 using ProductTest.Interfaces;
 
-namespace ProductTest;
+namespace ProductTest.Models;
 
 public class TestReport : TestReportBase, ITestReport
 {
@@ -17,7 +17,7 @@ public class TestReport : TestReportBase, ITestReport
         }
     }
 
-    private TestReport(string path) : base(string.Empty,string.Empty, string.Empty, DateTime.MinValue, new List<TestStep>())
+    private TestReport(string path) : base(string.Empty, string.Empty, string.Empty, DateTime.MinValue, new List<TestStep>())
     {
         var linesOfText = File.ReadAllLines(path);
         SetSerialNumber(linesOfText);
@@ -31,10 +31,10 @@ public class TestReport : TestReportBase, ITestReport
     }
 
     public static TestReport Create(string serialNumber,
-                                    string status,     
+                                    string status,
                                     string workstation,
                                     DateTime testStarted,
-                                    IEnumerable<TestStep> testSteps,
+                                    List<TestStep> testSteps,
                                     string failure = "",
                                     string fixtureSocket = "",
                                     TimeSpan? testingTime = null)
@@ -43,15 +43,15 @@ public class TestReport : TestReportBase, ITestReport
     }
 
     private TestReport(string serialNumber,
-                        string status, 
+                        string status,
                         string workstation,
                         DateTime testStarted,
-                        IEnumerable<TestStep> testSteps,
+                        List<TestStep> testSteps,
                         string failure = "",
                         string fixtureSocket = "",
                         TimeSpan? testingTime = null
-    ) : base(serialNumber, status, workstation,testStarted,testSteps,failure,fixtureSocket,testingTime)
-    {    }
+    ) : base(serialNumber, status, workstation, testStarted, testSteps, failure, fixtureSocket, testingTime)
+    { }
 
     public FileInfo SaveReport(string directoryPath)
     {
@@ -109,75 +109,64 @@ public class TestReport : TestReportBase, ITestReport
     }
     private void SetTestSteps(string path)
     {
-        var testSteps = new List<TestStep>();
         string logFileText = File.ReadAllText(path);
         string[] splittedText = logFileText.Split("~#~");
         foreach (string testCase in splittedText)
         {
-            string[] logFileData = new string[9];
-            string[] splittedTestCase = testCase.Split("\n");
-            for (int i = 0; i < splittedTestCase.Length; i++)
+            string name = string.Empty;
+            string date = string.Empty;
+            string time = string.Empty;
+            string status = string.Empty;
+            string type = string.Empty;
+            string value = string.Empty;
+            string unit = string.Empty;
+            string lowerlimit = string.Empty;
+            string upperlimit = string.Empty;
+
+            string[] line = testCase.Split("\n");
+            for (int i = 0; i < line.Length; i++)
             {
-                if (splittedTestCase[i].Contains("Date:")) logFileData[0] = splittedTestCase[i].Split("\t", StringSplitOptions.None)[1].Trim();
-                if (splittedTestCase[i].Contains("Time:")) logFileData[1] = splittedTestCase[i].Split("\t", StringSplitOptions.None)[1].Trim();
-                if (splittedTestCase[i].Contains("TestName:")) logFileData[2] = splittedTestCase[i].Split("\t", StringSplitOptions.None)[1].Trim();
-                if (splittedTestCase[i].Contains("TestType:"))
-                    logFileData[3] = splittedTestCase[i].Split("\t", StringSplitOptions.None)[1].Trim();
-                if (splittedTestCase[i].Contains("Result:"))
+                if (line[i].Contains("Date:")) date = GetFieldValue(line[i]);
+                if (line[i].Contains("Time:")) time = GetFieldValue(line[i]);
+                if (line[i].Contains("TestName:")) name = GetFieldValue(line[i]);
+                if (line[i].Contains("TestType:")) type = GetFieldValue(line[i]);
+                if (line[i].Contains("Result:"))
                 {
-                    string bufor = splittedTestCase[i].Split("\t", StringSplitOptions.None)[1].Trim().ToLower();
-                    logFileData[4] = string.Concat(bufor[0].ToString().ToUpper(), bufor.AsSpan(1));
+                    string bufor = GetFieldValue(line[i]).ToLower();
+                    status = string.Concat(bufor[0].ToString().ToUpper(), bufor.AsSpan(1));
                 }
-                if (splittedTestCase[i].Contains("Value:"))
-                    logFileData[5] = splittedTestCase[i].Split("\t", StringSplitOptions.None)[1].Trim();
-                if (splittedTestCase[i].Contains("Units:"))
-                    logFileData[6] = splittedTestCase[i].Split("\t", StringSplitOptions.None)[1].Trim();
-                if (splittedTestCase[i].Contains("LowerLimit:"))
-                    logFileData[7] = splittedTestCase[i].Split("\t", StringSplitOptions.None)[1].Trim();
-                if (splittedTestCase[i].Contains("UpperLimit:"))
-                    logFileData[8] = splittedTestCase[i].Split("\t", StringSplitOptions.None)[1].Trim();
+                if (line[i].Contains("Value:")) value = GetFieldValue(line[i]);
+                if (line[i].Contains("Units:")) unit = GetFieldValue(line[i]);
+                if (line[i].Contains("LowerLimit:")) lowerlimit = GetFieldValue(line[i]);
+                if (line[i].Contains("UpperLimit:")) upperlimit = GetFieldValue(line[i]);
 
-                if (i == splittedTestCase.Length - 1)
+                if (i == line.Length - 1)
                 {
-                    DateTime dt = ConvertDateAndTime(logFileData[0..2]);
+                    DateTime datetime = ConvertDateAndTime(date, time, testCase);
 
-                    var testStep = TestStep.Create(logFileData[2], dt, logFileData[4], logFileData[3], logFileData[5], logFileData[6], logFileData[7], logFileData[8]);
-                    if (testStep.Name != null && testStep.Status != null)
-                        testSteps.Add(testStep);
+                    var testStep = TestStep.Create(name, datetime, status, type, value, unit, lowerlimit, upperlimit);
+                    if (testStep.Name != string.Empty && testStep.Status != string.Empty)
+                        TestSteps.Add(testStep);
                 }
             }
         }
-        TestSteps = testSteps;
     }
-    private static DateTime ConvertDateAndTime(string[] dt)
+    private static string GetFieldValue(string lineOfText)
     {
-        if (dt[0]?.Length == 10 && dt[1]?.Length == 8)
-        {
-            // If date is first...
-            var year = Int32.Parse(dt[0].Substring(6, 4));
-            var month = Int32.Parse(dt[0][..2]);
-            var day = Int32.Parse(dt[0].Substring(3, 2));
-            var hour = Int32.Parse(dt[1][..2]);
-            var minute = Int32.Parse(dt[1].Substring(3, 2));
-            var second = Int32.Parse(dt[1].Substring(6, 2));
+        return lineOfText.Split("\t")[1].Trim().Replace(',', '_');
+    }
+    private static DateTime ConvertDateAndTime(string date, string time, string cc)
+    {
+        if (date == string.Empty || time == string.Empty) return DateTime.MinValue;
+        var year = int.Parse(date.Substring(6, 4));
+        var month = int.Parse(date[..2]);
+        var day = int.Parse(date.Substring(3, 2));
+        var hour = int.Parse(time[..2]);
+        var minute = int.Parse(time.Substring(3, 2));
+        var second = int.Parse(time.Substring(6, 2));
 
-            var Converted = new DateTime(year, month, day, hour, minute, second);
-            return Converted;
-        }
-        else if (dt[0]?.Length == 8 && dt[1]?.Length == 10)
-        {
-            // If time is first...
-            var year = Int32.Parse(dt[1].Substring(6, 4));
-            var month = Int32.Parse(dt[1][..2]);
-            var day = Int32.Parse(dt[1].Substring(3, 2));
-            var hour = Int32.Parse(dt[0][..2]);
-            var minute = Int32.Parse(dt[0].Substring(3, 2));
-            var second = Int32.Parse(dt[0].Substring(6, 2));
-
-            var Converted = new DateTime(year, month, day, hour, minute, second);
-            return Converted;
-        }
-        return new DateTime(0);
+        var Converted = new DateTime(year, month, day, hour, minute, second);
+        return Converted;
     }
     private void SetStatus()
     {
@@ -197,7 +186,7 @@ public class TestReport : TestReportBase, ITestReport
         try
         {
             var min = TestSteps.First().DateTimeFinish;
-            foreach (var testStep in this.TestSteps!)
+            foreach (var testStep in TestSteps!)
             {
                 if (testStep.DateTimeFinish < min)
                     min = testStep.DateTimeFinish;
