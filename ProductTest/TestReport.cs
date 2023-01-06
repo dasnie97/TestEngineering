@@ -182,7 +182,6 @@ public class TestReport : TestReportBase, ITestReport
     private void SetStatus()
     {
         int passedTests = 0;
-        if (TestSteps == null) Status = TestStatus.Failed;
         foreach (TestStepBase testStep in TestSteps)
         {
             if (testStep.Status.Contains("pass", StringComparison.OrdinalIgnoreCase))
@@ -190,11 +189,8 @@ public class TestReport : TestReportBase, ITestReport
         }
         if (passedTests == TestSteps.Count() && passedTests != 0)
             Status = TestStatus.Passed;
-
-        if (TestSteps.Count() == 0)
-            throw new Exception("Log file has no test steps!");
-
-        Status = TestStatus.Failed;
+        else
+            Status = TestStatus.Failed;
     }
     private void SetTestDateAndTime()
     {
