@@ -12,9 +12,6 @@ public abstract class TestReportBase
     public string Failure { get; protected set; }
     public string? FixtureSocket { get; protected set; }
     public TimeSpan? TestingTime { get; protected set; }
-    //public bool IsFirstPass { get; set; }
-    //public bool FalseCall { get; set; }
-
     protected TestReportBase(string serialNumber,
                             string status,      
                             string workstation,
