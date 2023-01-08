@@ -6,8 +6,8 @@ public abstract class TestReportBase
 {
     public string SerialNumber { get; protected set; }
     public string Status { get; protected set; }
-    public Workstation Workstation { get; protected set; }
-    public List<TestStep> TestSteps { get; protected set; }
+    public WorkstationBase Workstation { get; protected set; }
+    public List<TestStepBase> TestSteps { get; protected set; }
     public DateTime TestDateTimeStarted { get; protected set; }
     public string Failure { get; protected set; }
     public string? FixtureSocket { get; protected set; }
@@ -19,7 +19,7 @@ public abstract class TestReportBase
                             string status,      
                             string workstation,
                             DateTime testStarted,
-                            List<TestStep> testSteps,
+                            List<TestStepBase> testSteps,
                             string failure = "",
                             string fixtureSocket = "",
                             TimeSpan? testingTime = null

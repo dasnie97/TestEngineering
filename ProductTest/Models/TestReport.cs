@@ -17,7 +17,7 @@ public class TestReport : TestReportBase, ITestReport
         }
     }
 
-    private TestReport(string path) : base(string.Empty, string.Empty, string.Empty, DateTime.MinValue, new List<TestStep>())
+    private TestReport(string path) : base(string.Empty, string.Empty, string.Empty, DateTime.MinValue, new List<TestStepBase>())
     {
         var linesOfText = File.ReadAllLines(path);
         SetSerialNumber(linesOfText);
@@ -34,7 +34,7 @@ public class TestReport : TestReportBase, ITestReport
                                     string status,
                                     string workstation,
                                     DateTime testStarted,
-                                    List<TestStep> testSteps,
+                                    List<TestStepBase> testSteps,
                                     string failure = "",
                                     string fixtureSocket = "",
                                     TimeSpan? testingTime = null)
@@ -46,7 +46,7 @@ public class TestReport : TestReportBase, ITestReport
                         string status,
                         string workstation,
                         DateTime testStarted,
-                        List<TestStep> testSteps,
+                        List<TestStepBase> testSteps,
                         string failure = "",
                         string fixtureSocket = "",
                         TimeSpan? testingTime = null
