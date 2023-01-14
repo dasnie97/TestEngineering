@@ -32,9 +32,9 @@ public abstract class TestStepBase
         LowerLimit = lowerLimit;
         UpperLimit = upperLimit;
         Failure = failure;
-        SetNumeric();
+        CheckIfNumericAndSet();
     }
-    private void SetNumeric()
+    private void CheckIfNumericAndSet()
     {
         IsNumeric = float.TryParse(Value, out _) && (LowerLimit != UpperLimit);
     }
