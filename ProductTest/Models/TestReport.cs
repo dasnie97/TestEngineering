@@ -17,7 +17,7 @@ public class TestReport : TestReportBase, ITestReport
         }
     }
 
-    private TestReport(string path) : base(string.Empty, string.Empty, string.Empty, DateTime.MinValue, new List<TestStepBase>())
+    private TestReport(string path) : base()
     {
         var linesOfText = File.ReadAllLines(path);
         SetSerialNumber(linesOfText);
@@ -27,30 +27,24 @@ public class TestReport : TestReportBase, ITestReport
         SetFailedStepData();
         SetStationName(linesOfText);
         SetBoardTestingTime();
-        SetTestSocket(linesOfText);
+        SetTestSocket();
     }
 
     public static TestReport Create(string serialNumber,
                                     string status,
                                     string workstation,
                                     DateTime testStarted,
-                                    List<TestStepBase> testSteps,
-                                    string failure = "",
-                                    string fixtureSocket = "",
-                                    TimeSpan? testingTime = null)
+                                    List<TestStepBase> testSteps)
     {
-        return new TestReport(serialNumber, status, workstation, testStarted, testSteps, failure, fixtureSocket, testingTime);
+        return new TestReport(serialNumber, status, workstation, testStarted, testSteps);
     }
 
     private TestReport(string serialNumber,
                         string status,
                         string workstation,
                         DateTime testStarted,
-                        List<TestStepBase> testSteps,
-                        string failure = "",
-                        string fixtureSocket = "",
-                        TimeSpan? testingTime = null
-    ) : base(serialNumber, status, workstation, testStarted, testSteps, failure, fixtureSocket, testingTime)
+                        List<TestStepBase> testSteps
+    ) : base(serialNumber, status, workstation, testStarted, testSteps)
     { }
 
     public FileInfo SaveReport(string directoryPath)
@@ -109,6 +103,7 @@ public class TestReport : TestReportBase, ITestReport
     }
     private void SetTestSteps(string path)
     {
+        var testSteps = new List<TestStep>();
         string logFileText = File.ReadAllText(path);
         string[] splittedText = logFileText.Split("~#~");
         foreach (string testCase in splittedText)
@@ -146,10 +141,11 @@ public class TestReport : TestReportBase, ITestReport
 
                     var testStep = TestStep.Create(name, datetime, status, type, value, unit, lowerlimit, upperlimit);
                     if (testStep.Name != string.Empty && testStep.Status != string.Empty)
-                        TestSteps.Add(testStep);
+                        testSteps.Add(testStep);
                 }
             }
         }
+        TestSteps = testSteps;
     }
     private static string GetFieldValue(string lineOfText)
     {
@@ -198,16 +194,7 @@ public class TestReport : TestReportBase, ITestReport
             TestDateTimeStarted = DateTime.MinValue;
         }
     }
-    private void SetFailedStepData()
-    {
-        var failDetails = "";
-        foreach (var test in TestSteps)
-        {
-            if (test.Status.Contains("fail", StringComparison.OrdinalIgnoreCase))
-                failDetails = $"{test.Name}\nValue measured: {test.Value}\nLower limit: {test.LowerLimit}\nUpper limit: {test.UpperLimit}";
-        }
-        Failure = failDetails;
-    }
+
     private void SetStationName(IEnumerable<string> linesOfText)
     {
         var workstation = string.Empty;
@@ -223,50 +210,4 @@ public class TestReport : TestReportBase, ITestReport
         if (workstation == string.Empty) throw new Exception("Operator field is missing!");
         else Workstation = new Workstation(workstation);
     }
-    private void SetBoardTestingTime()
-    {
-        try
-        {
-            var minTime = TestSteps.Min(testStep => testStep.DateTimeFinish);
-            var maxTime = TestSteps.Max(testStep => testStep.DateTimeFinish);
-            TestingTime = maxTime - minTime;
-        }
-        catch
-        {
-            TestingTime = null;
-        }
-    }
-    private void SetTestSocket(IEnumerable<string> linesOfText)
-    {
-        bool dataAhead = false;
-
-        foreach (string line in linesOfText)
-        {
-            if (line.Contains("Test Socket Number"))
-                dataAhead = true;
-            if (dataAhead)
-            {
-                if (line.Contains("Value"))
-                {
-                    string[] SplittedLine = line.Split("\t", StringSplitOptions.None);
-                    FixtureSocket = SplittedLine[1];
-                }
-            }
-        }
-        FixtureSocket = "";
-    }
-
-    //private static string GetTestProgramFilePath(IEnumerable<string> text)
-    //{
-    //    foreach (string line in text)
-    //    {
-    //        // Look for specific field in log file
-    //        if (line.Contains("TestProgram:"))
-    //        {
-    //            // Split string into 2 substrings basing on tab separator and return second substring
-    //            string[] SplittedLine = line.Split("\t", StringSplitOptions.None);
-    //            return SplittedLine[1];
-    //        }
-    //    }
-    //    return String.Empty;
 }
