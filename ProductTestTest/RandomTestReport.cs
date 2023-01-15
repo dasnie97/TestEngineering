@@ -20,8 +20,8 @@ public static class RandomTestReport
     };
     public static string SerialNumber = RandomNumberGenerator.GetInt32(1000).ToString();
 
-    public static TestReport ArrangeTestReportWithDefaultAndRandomData()
+    public static FileTestReport ArrangeTestReportWithDefaultAndRandomData()
     {
-        return TestReport.Create(SerialNumber, Status, Workstation, DateTimeStarted, TestSteps);
+        return FileTestReport.Create(SerialNumber, Workstation, TestSteps);
     }
 }

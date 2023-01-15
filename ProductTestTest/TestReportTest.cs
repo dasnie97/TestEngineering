@@ -1,7 +1,4 @@
-using ProductTest.Common;
 using ProductTest.Models;
-using System.Drawing.Text;
-using System.Security.Cryptography;
 
 namespace ProductTestTest;
 
@@ -10,19 +7,31 @@ public class TestReportTest
     [Fact]
     public void CheckTestReportCreationFromFileWithBadArgument_ThrowsAnException()
     {
-        Action action = () => TestReport.CreateFromFile("");
+        Action action = () => FileTestReport.CreateFromFile("");
 
         Assert.Throws<FileNotFoundException>(action);
+    }
+
+    [Fact]
+    public void TestIfTestReportIsCreatedProperly()
+    {
+        FileTestReport testReport = RandomTestReport.ArrangeTestReportWithDefaultAndRandomData();
+
+        Assert.Equal(RandomTestReport.SerialNumber, testReport.SerialNumber);
+        Assert.Equal(RandomTestReport.Status, testReport.Status);
+        Assert.Equal(RandomTestReport.Workstation, testReport.Workstation.Name);
+        Assert.Equal(RandomTestReport.DateTimeStarted, testReport.TestDateTimeStarted);
+        Assert.Equal(RandomTestReport.TestSteps, testReport.TestSteps);
     }
 
     [Fact]
     public void TestIfTestReportFileIsCreatedProperly()
     {
         string currentDir = Directory.GetCurrentDirectory();
-        TestReport testReport = RandomTestReport.ArrangeTestReportWithDefaultAndRandomData();
+        FileTestReport testReport = RandomTestReport.ArrangeTestReportWithDefaultAndRandomData();
 
         FileInfo testReportFile = testReport.SaveReport(currentDir);
-        TestReport testReportCreatedFromFile = TestReport.CreateFromFile(testReportFile.FullName);
+        FileTestReport testReportCreatedFromFile = FileTestReport.CreateFromFile(testReportFile.FullName);
 
         Assert.True(File.Exists(testReportFile.FullName));
         Assert.Equal(testReport.SerialNumber, testReportCreatedFromFile.SerialNumber);
@@ -43,17 +52,5 @@ public class TestReportTest
         Assert.Equal(testReport.TestSteps.First().Failure, testReportCreatedFromFile.TestSteps.First().Failure);
 
         File.Delete(testReportFile.FullName);
-    }
-
-    [Fact]
-    public void TestIfTestReportIsCreatedProperly()
-    {
-        TestReport testReport = RandomTestReport.ArrangeTestReportWithDefaultAndRandomData();
-
-        Assert.Equal(RandomTestReport.SerialNumber, testReport.SerialNumber);
-        Assert.Equal(RandomTestReport.Status, testReport.Status);
-        Assert.Equal(RandomTestReport.Workstation, testReport.Workstation.Name);
-        Assert.Equal(RandomTestReport.DateTimeStarted, testReport.TestDateTimeStarted);
-        Assert.Equal(RandomTestReport.TestSteps, testReport.TestSteps);
     }
 }
