@@ -4,6 +4,6 @@ namespace ProductTest.Models;
 
 public class Workstation : WorkstationBase
 {
-    public Workstation(string name) : base(name)
+    public Workstation(string name = "", string operatorName = "") : base(name, operatorName)
     { }
 }

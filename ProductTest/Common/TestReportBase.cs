@@ -29,7 +29,7 @@ public abstract class TestReportBase
     protected TestReportBase()
     {
         SerialNumber = string.Empty;
-        Workstation = new Workstation("Default");
+        Workstation = new Workstation();
         TestSteps = new List<TestStepBase>();
         TestDateTimeStarted = DateTime.Now;
         Status = string.Empty;
