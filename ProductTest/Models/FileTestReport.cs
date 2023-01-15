@@ -5,6 +5,20 @@ namespace ProductTest.Models;
 
 public class FileTestReport : TestReportBase, ITestReport
 {
+    public string FilePath { get; protected set; }
+    public static FileTestReport Create(string serialNumber,
+                        string workstation,
+                        List<TestStepBase> testSteps)
+    {
+        return new FileTestReport(serialNumber, workstation, testSteps);
+    }
+
+    protected FileTestReport(string serialNumber,
+                            string workstation,
+                            List<TestStepBase> testSteps) :
+        base(serialNumber, workstation, testSteps)
+    { }
+
     public static FileTestReport CreateFromFile(string path)
     {
         if (File.Exists(path))
@@ -19,6 +33,7 @@ public class FileTestReport : TestReportBase, ITestReport
 
     protected FileTestReport(string path) : base()
     {
+        FilePath = path;
         var linesOfText = File.ReadAllLines(path);
         SetSerialNumber(linesOfText);
         SetStationName(linesOfText);
