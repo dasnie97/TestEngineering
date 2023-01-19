@@ -30,10 +30,10 @@ public class TestReportTest
         string currentDir = Directory.GetCurrentDirectory();
         FileTestReport testReport = RandomTestReport.ArrangeTestReportWithDefaultAndRandomData();
 
-        FileInfo testReportFile = testReport.SaveReport(currentDir);
-        FileTestReport testReportCreatedFromFile = FileTestReport.CreateFromFile(testReportFile.FullName);
+        testReport.SaveReport(currentDir);
+        FileTestReport testReportCreatedFromFile = FileTestReport.CreateFromFile(testReport.FilePath);
 
-        Assert.True(File.Exists(testReportFile.FullName));
+        Assert.True(File.Exists(testReport.FilePath));
         Assert.Equal(testReport.SerialNumber, testReportCreatedFromFile.SerialNumber);
         Assert.Equal(testReport.Status, testReportCreatedFromFile.Status);
         Assert.Equal(testReport.Workstation.Name, testReportCreatedFromFile.Workstation.Name);
@@ -51,6 +51,6 @@ public class TestReportTest
         Assert.Equal(testReport.TestSteps.First().IsNumeric, testReportCreatedFromFile.TestSteps.First().IsNumeric);
         Assert.Equal(testReport.TestSteps.First().Failure, testReportCreatedFromFile.TestSteps.First().Failure);
 
-        File.Delete(testReportFile.FullName);
+        File.Delete(testReport.FilePath);
     }
 }
