@@ -8,16 +8,20 @@ public class FileTestReport : TestReportBase, ITestReport
     public string FilePath { get; protected set; }
     public static FileTestReport Create(string serialNumber,
                         string workstation,
-                        List<TestStepBase> testSteps)
+                        List<TestStepBase> testSteps,
+                        string filePath = "")
     {
-        return new FileTestReport(serialNumber, workstation, testSteps);
+        return new FileTestReport(filePath, serialNumber, workstation, testSteps);
     }
 
-    protected FileTestReport(string serialNumber,
+    protected FileTestReport(string filePath,
+                            string serialNumber,
                             string workstation,
                             List<TestStepBase> testSteps) :
         base(serialNumber, workstation, testSteps)
-    { }
+    {
+        FilePath = filePath;
+    }
 
     public static FileTestReport CreateFromFile(string path)
     {
@@ -45,7 +49,7 @@ public class FileTestReport : TestReportBase, ITestReport
         SetBoardTestingTime();
     }
 
-    public FileInfo SaveReport(string directoryPath)
+    public void SaveReport(string directoryPath)
     {
         var testReportName = $"{TestDateTimeStarted.Month:00}{TestDateTimeStarted.Day:00}{TestDateTimeStarted.Year}_" +
             $"{TestDateTimeStarted.Hour:00}{TestDateTimeStarted.Minute:00}{TestDateTimeStarted.Second:00}_{SerialNumber}.txt";
@@ -81,7 +85,7 @@ public class FileTestReport : TestReportBase, ITestReport
 
         var testReportPath = Path.Combine(directoryPath, testReportName);
         File.WriteAllLines(testReportPath, testReport);
-        return new FileInfo(testReportPath);
+        FilePath = testReportPath;
     }
 
     private void SetSerialNumber(IEnumerable<string> linesOfText)
