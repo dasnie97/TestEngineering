@@ -1,7 +1,7 @@
 ﻿using ProductTest.Interfaces;
 using ProductTest.Common;
 
-namespace ProductTest;
+namespace ProductTest.Models;
 
 public class TestStep : TestStepBase, ITestStep
 {
@@ -25,7 +25,7 @@ public class TestStep : TestStepBase, ITestStep
                     string unit = "",
                     string lowerLimit = "",
                     string upperLimit = "",
-                    string failure = "") : 
-        base (name, dateTimeCompleted, status, type, value, unit, lowerLimit, upperLimit, failure)
-    {}
+                    string failure = "") :
+        base(name, dateTimeCompleted, status, type, value, unit, lowerLimit, upperLimit, failure)
+    { }
 }
