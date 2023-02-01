@@ -1,11 +1,13 @@
 ﻿using ProductTest.Common;
 using ProductTest.Interfaces;
+using System.Security.Policy;
 
 namespace ProductTest.Models;
 
 public class FileTestReport : TestReportBase, ITestReport
 {
     public string FilePath { get; protected set; }
+    public string FileName { get; protected set; }
     public static FileTestReport Create(string serialNumber,
                         string workstation,
                         List<TestStepBase> testSteps,
@@ -21,6 +23,7 @@ public class FileTestReport : TestReportBase, ITestReport
         base(serialNumber, workstation, testSteps)
     {
         FilePath = filePath;
+        GetFileName();
     }
 
     public static FileTestReport CreateFromFile(string path)
@@ -51,9 +54,6 @@ public class FileTestReport : TestReportBase, ITestReport
 
     public void SaveReport(string directoryPath)
     {
-        var testReportName = $"{TestDateTimeStarted.Month:00}{TestDateTimeStarted.Day:00}{TestDateTimeStarted.Year}_" +
-            $"{TestDateTimeStarted.Hour:00}{TestDateTimeStarted.Minute:00}{TestDateTimeStarted.Second:00}_{SerialNumber}.txt";
-
         var testReport = new List<string>
         {
             $"PanelBarcode:\t{SerialNumber}",
@@ -83,9 +83,15 @@ public class FileTestReport : TestReportBase, ITestReport
             testReport.Add("~#~");
         }
 
-        var testReportPath = Path.Combine(directoryPath, testReportName);
+        var testReportPath = Path.Combine(directoryPath, FileName);
         File.WriteAllLines(testReportPath, testReport);
         FilePath = testReportPath;
+    }
+
+    private void GetFileName()
+    {
+        FileName = $"{TestDateTimeStarted.Month:00}{TestDateTimeStarted.Day:00}{TestDateTimeStarted.Year}_" +
+                    $"{TestDateTimeStarted.Hour:00}{TestDateTimeStarted.Minute:00}{TestDateTimeStarted.Second:00}_{SerialNumber}.txt";
     }
 
     private void SetSerialNumber(IEnumerable<string> linesOfText)
