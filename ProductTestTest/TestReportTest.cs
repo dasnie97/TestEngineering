@@ -1,4 +1,7 @@
+using ProductTest.Common;
+using ProductTest.Interfaces;
 using ProductTest.Models;
+using System.Security.Cryptography;
 
 namespace ProductTestTest;
 
@@ -15,20 +18,22 @@ public class TestReportTest
     [Fact]
     public void TestIfTestReportIsCreatedProperly()
     {
-        FileTestReport testReport = RandomTestReport.ArrangeTestReportWithDefaultAndRandomData();
+        FileTestReportCreator creator = new FileTestReportCreator();
+        FileTestReport testReport = creator.Create();
 
-        Assert.Equal(RandomTestReport.SerialNumber, testReport.SerialNumber);
-        Assert.Equal(RandomTestReport.Status, testReport.Status);
-        Assert.Equal(RandomTestReport.Workstation, testReport.Workstation.Name);
-        Assert.Equal(RandomTestReport.DateTimeStarted, testReport.TestDateTimeStarted);
-        Assert.Equal(RandomTestReport.TestSteps, testReport.TestSteps);
+        Assert.Equal(creator.SerialNumber, testReport.SerialNumber);
+        Assert.Equal(creator.Status, testReport.Status);
+        Assert.Equal(creator.Workstation, testReport.Workstation.Name);
+        Assert.Equal(creator.DateAndTime, testReport.TestDateTimeStarted);
+        Assert.Equal(creator.TestSteps, testReport.TestSteps);
     }
 
     [Fact]
     public void TestIfTestReportFileIsCreatedProperly()
     {
         string currentDir = Directory.GetCurrentDirectory();
-        FileTestReport testReport = RandomTestReport.ArrangeTestReportWithDefaultAndRandomData();
+        FileTestReportCreator creator = new FileTestReportCreator();
+        FileTestReport testReport = creator.Create();
 
         testReport.SaveReport(currentDir);
         FileTestReport testReportCreatedFromFile = FileTestReport.CreateFromFile(testReport.FilePath);
