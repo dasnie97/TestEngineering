@@ -10,8 +10,8 @@ namespace ProductTestTest;
 
 public class FileTestReportCreator
 {
-    public string SerialNumber { get; set; } = "123123123123";
-    public string Workstation = "TestFCT";
+    public string SerialNumber = Guid.NewGuid().ToString();
+    public string Workstation = Guid.NewGuid().ToString();
     public string Status = TestStatus.Failed;
     public DateTime DateAndTime = new DateTime(2023, 1, 14, 21, 37, 00);
     public List<TestStepBase> TestSteps { get; set; } = new List<TestStepBase>() { TestStep.Create("Test1", DateTime.Now, TestStatus.Failed) };
