@@ -1,9 +1,16 @@
 ﻿using ProductTest.Common;
+using ProductTest.Interfaces;
 
 namespace ProductTest.Models;
 
-public class Workstation : WorkstationBase
+public class Workstation : IWorkstation
 {
-    public Workstation(string name = "", string operatorName = "") : base(name, operatorName)
-    { }
+    public string Name { get; set; }
+    public string OperatorName { get; set; }
+
+    public Workstation(string name = "", string operatorName = "")
+    {
+        Name = name;
+        OperatorName = operatorName;
+    }
 }

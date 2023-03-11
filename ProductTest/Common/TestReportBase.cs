@@ -1,11 +1,12 @@
-﻿using ProductTest.Models;
+﻿using ProductTest.Interfaces;
+using ProductTest.Models;
 
 namespace ProductTest.Common;
 
 public abstract class TestReportBase
 {
     public string SerialNumber { get; protected set; }
-    public WorkstationBase Workstation { get; protected set; }
+    public IWorkstation Workstation { get; protected set; }
     public IEnumerable<TestStepBase> TestSteps { get; protected set; }
     public DateTime TestDateTimeStarted { get; protected set; }
     public string Status { get; protected set; }
