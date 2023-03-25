@@ -16,4 +16,7 @@ public class TestReport : TestReportBase
                             List<TestStepBase> testSteps) : 
         base(serialNumber, workstation, testSteps)
 	{}
+
+    protected TestReport() : base()
+    { }
 }
