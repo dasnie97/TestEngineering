@@ -1,10 +1,9 @@
 ﻿using ProductTest.Common;
 using ProductTest.Interfaces;
-using System.Security.Policy;
 
 namespace ProductTest.Models;
 
-public class FileTestReport : TestReportBase, ITestReport
+public class FileTestReport : TestReport, ITestReport
 {
     public string FilePath { get; protected set; }
     public string FileName { get; protected set; }
@@ -57,7 +56,7 @@ public class FileTestReport : TestReportBase, ITestReport
         var testReport = new List<string>
         {
             $"PanelBarcode:\t{SerialNumber}",
-            $"Operator:\t{Workstation.Name}",
+            $"Operator:\t{Workstation}",
             $"ImageBarcode:\t{SerialNumber}",
             $""
         };
@@ -121,8 +120,14 @@ public class FileTestReport : TestReportBase, ITestReport
                 break;
             }
         }
-        if (workstation == string.Empty) throw new Exception("Operator field is missing!");
-        else Workstation = new Workstation(workstation);
+        if (workstation == string.Empty)
+        {
+            throw new Exception("Operator field is missing!");
+        }
+        else
+        {
+            Workstation = workstation;
+        }
     }
 
     private void SetTestSteps(string path)
