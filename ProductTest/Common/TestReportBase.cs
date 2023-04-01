@@ -6,7 +6,7 @@ namespace ProductTest.Common;
 public abstract class TestReportBase
 {
     public string SerialNumber { get; protected set; }
-    public string Workstation { get; protected set; }
+    public WorkstationBase Workstation { get; protected set; } = new Workstation();
     public IEnumerable<TestStepBase> TestSteps { get; protected set; }
     public DateTime TestDateTimeStarted { get; protected set; }
     public string Status { get; protected set; }
@@ -19,7 +19,7 @@ public abstract class TestReportBase
                             List<TestStepBase> testSteps)
     {
         SerialNumber = serialNumber;
-        Workstation = workstation;
+        Workstation.Name = workstation;
         TestSteps = testSteps;
         SetTestDateAndTime();
         SetStatus();
@@ -30,7 +30,6 @@ public abstract class TestReportBase
     protected TestReportBase()
     {
         SerialNumber = string.Empty;
-        Workstation = string.Empty;
         TestSteps = new List<TestStepBase>();
         TestDateTimeStarted = DateTime.Now;
         Status = string.Empty;

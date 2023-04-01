@@ -3,11 +3,8 @@ using ProductTest.Interfaces;
 
 namespace ProductTest.Models;
 
-public class Workstation : IWorkstation
-{
-    public string Name { get; set; }
-    public string OperatorName { get; set; }
-
+public class Workstation : WorkstationBase, IWorkstation
+{ 
     public Workstation(string name = "", string operatorName = "")
     {
         Name = name;

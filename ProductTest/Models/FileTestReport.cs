@@ -126,7 +126,7 @@ public class FileTestReport : TestReport, ITestReport
         }
         else
         {
-            Workstation = workstation;
+            Workstation.Name = workstation;
         }
     }
 
