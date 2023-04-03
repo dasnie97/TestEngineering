@@ -143,7 +143,7 @@ public class FileTestReport : TestReport, ITestReport
             string name = null;
             string date = null;
             string time = null;
-            Common.TestStatus status = Common.TestStatus.NotSet;
+            TestStatus status = TestStatus.NotSet;
             string type = null;
             string value = null;
             string unit = null;
@@ -162,7 +162,7 @@ public class FileTestReport : TestReport, ITestReport
                     // Converts string to have first letter upper-case. passed => Passed
                     string statusValue = GetFieldValue(line[i]).ToLower();
                     string capitalizedStatusValue = string.Concat(statusValue[0].ToString().ToUpper(), statusValue.AsSpan(1));
-                    status = Enum.Parse<Common.TestStatus>(capitalizedStatusValue);
+                    status = Enum.Parse<TestStatus>(capitalizedStatusValue);
                 }
                 if (line[i].Contains("Value:")) value = GetFieldValue(line[i]);
                 if (line[i].Contains("Units:")) unit = GetFieldValue(line[i]);
@@ -180,7 +180,7 @@ public class FileTestReport : TestReport, ITestReport
                     testStep.LowerLimit = lowerlimit;
                     testStep.UpperLimit = upperlimit;
 
-                    if (testStep.Name != string.Empty && status != Common.TestStatus.NotSet)
+                    if (testStep.Name != string.Empty && status != TestStatus.NotSet)
                         testSteps.Add(testStep);
                 }
             }

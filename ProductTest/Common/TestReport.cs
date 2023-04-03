@@ -1,4 +1,6 @@
-﻿namespace ProductTest.Common;
+﻿using ProductTest.Models;
+
+namespace ProductTest.Common;
 
 public abstract class TestReport
 {

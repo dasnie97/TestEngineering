@@ -8,7 +8,7 @@ public class FileTestReportCreator
     public Workstation Workstation = new Workstation(Guid.NewGuid().ToString());
     public List<TestStep> TestSteps { get; set; } = new List<TestStep>()
     { 
-        new TestStep("Test1", new DateTime(2023, 1, 14, 21, 37, 00), ProductTest.Common.TestStatus.Failed) 
+        new TestStep("Test1", new DateTime(2023, 1, 14, 21, 37, 00), TestStatus.Failed) 
     };
 
     public FileTestReport Create()

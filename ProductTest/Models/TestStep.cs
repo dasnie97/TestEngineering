@@ -1,6 +1,4 @@
-﻿using ProductTest.Common;
-
-namespace ProductTest.Models;
+﻿namespace ProductTest.Models;
 
 public class TestStep : Common.TestStep
 {
