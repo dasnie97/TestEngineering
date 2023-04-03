@@ -1,25 +1,22 @@
-﻿using ProductTest.Interfaces;
-using ProductTest.Models;
+﻿namespace ProductTest.Common;
 
-namespace ProductTest.Common;
-
-public abstract class TestReportBase
+public abstract class TestReport
 {
     public string SerialNumber { get; protected set; }
-    public WorkstationBase Workstation { get; protected set; } = new Workstation();
-    public IEnumerable<TestStepBase> TestSteps { get; protected set; }
+    public Workstation Workstation { get; protected set; }
+    public IEnumerable<TestStep> TestSteps { get; protected set; }
     public DateTime TestDateTimeStarted { get; protected set; }
-    public string Status { get; protected set; }
+    public TestStatus Status { get; protected set; }
     public string Failure { get; protected set; }
     public string? FixtureSocket { get; protected set; }
     public TimeSpan? TestingTime { get; protected set; }
 
-    protected TestReportBase(string serialNumber,
-                            string workstation,
-                            List<TestStepBase> testSteps)
+    protected TestReport(string serialNumber,
+                            Workstation workstation,
+                            IEnumerable<TestStep> testSteps)
     {
         SerialNumber = serialNumber;
-        Workstation.Name = workstation;
+        Workstation = workstation;
         TestSteps = testSteps;
         SetTestDateAndTime();
         SetStatus();
@@ -27,13 +24,11 @@ public abstract class TestReportBase
         SetTestSocket();
         SetBoardTestingTime();
     }
-    protected TestReportBase()
+    protected TestReport()
     {
-        SerialNumber = string.Empty;
-        TestSteps = new List<TestStepBase>();
-        TestDateTimeStarted = DateTime.Now;
-        Status = string.Empty;
-        Failure = string.Empty;
+        TestSteps = new List<TestStep>();
+        TestDateTimeStarted = DateTime.MinValue;
+        Status = TestStatus.NotSet;
     }
 
     protected virtual void SetTestDateAndTime()
@@ -57,9 +52,9 @@ public abstract class TestReportBase
     protected virtual void SetStatus()
     {
         int passedTests = 0;
-        foreach (TestStepBase testStep in TestSteps)
+        foreach (TestStep testStep in TestSteps)
         {
-            if (testStep.Status.Contains("pass", StringComparison.OrdinalIgnoreCase))
+            if (testStep.Status == TestStatus.Passed)
                 passedTests++;
         }
         if (passedTests == TestSteps.Count() && passedTests != 0)
@@ -73,7 +68,7 @@ public abstract class TestReportBase
         var failDetails = "";
         foreach (var test in TestSteps)
         {
-            if (test.Status.Contains("fail", StringComparison.OrdinalIgnoreCase))
+            if (test.Status == TestStatus.Failed)
                 failDetails = $"{test.Name}\nValue measured: {test.Value}\nLower limit: {test.LowerLimit}\nUpper limit: {test.UpperLimit}";
         }
         Failure = failDetails;

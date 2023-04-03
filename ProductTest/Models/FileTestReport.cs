@@ -1,5 +1,4 @@
-﻿using ProductTest.Common;
-using ProductTest.Interfaces;
+﻿using ProductTest.Interfaces;
 
 namespace ProductTest.Models;
 
@@ -8,18 +7,17 @@ public class FileTestReport : TestReport, ITestReport
     public string FilePath { get; protected set; }
     public string FileName { get; protected set; }
     public static FileTestReport Create(string serialNumber,
-                        string workstation,
-                        List<TestStepBase> testSteps,
+                        Common.Workstation workstation,
+                        IEnumerable<Common.TestStep> testSteps,
                         string filePath = "")
     {
-        return new FileTestReport(filePath, serialNumber, workstation, testSteps);
+        return new FileTestReport(serialNumber, workstation, testSteps, filePath);
     }
 
-    protected FileTestReport(string filePath,
-                            string serialNumber,
-                            string workstation,
-                            List<TestStepBase> testSteps) :
-        base(serialNumber, workstation, testSteps)
+    protected FileTestReport(string serialNumber,
+                            Common.Workstation workstation,
+                            IEnumerable<Common.TestStep> testSteps,
+                            string filePath) : base(serialNumber, workstation, testSteps)
     {
         FilePath = filePath;
         GetFileName();
@@ -56,12 +54,12 @@ public class FileTestReport : TestReport, ITestReport
         var testReport = new List<string>
         {
             $"PanelBarcode:\t{SerialNumber}",
-            $"Operator:\t{Workstation}",
+            $"Operator:\t{Workstation.Name}",
             $"ImageBarcode:\t{SerialNumber}",
             $""
         };
 
-        foreach (TestStepBase testStep in TestSteps)
+        foreach (Common.TestStep testStep in TestSteps)
         {
             testReport.Add($"TestName:\t{testStep.Name}");
             if (!string.IsNullOrEmpty(testStep.Type))
@@ -126,7 +124,7 @@ public class FileTestReport : TestReport, ITestReport
         }
         else
         {
-            Workstation.Name = workstation;
+            Workstation = new Workstation(workstation);
         }
     }
 
@@ -137,15 +135,20 @@ public class FileTestReport : TestReport, ITestReport
         string[] splittedText = testReportText.Split("~#~");
         foreach (string testCase in splittedText)
         {
-            string name = string.Empty;
-            string date = string.Empty;
-            string time = string.Empty;
-            string status = string.Empty;
-            string type = string.Empty;
-            string value = string.Empty;
-            string unit = string.Empty;
-            string lowerlimit = string.Empty;
-            string upperlimit = string.Empty;
+            if (string.IsNullOrWhiteSpace(testCase))
+            {
+                continue;
+            }
+
+            string name = null;
+            string date = null;
+            string time = null;
+            Common.TestStatus status = Common.TestStatus.NotSet;
+            string type = null;
+            string value = null;
+            string unit = null;
+            string lowerlimit = null;
+            string upperlimit = null;
 
             string[] line = testCase.Split("\n");
             for (int i = 0; i < line.Length; i++)
@@ -156,8 +159,10 @@ public class FileTestReport : TestReport, ITestReport
                 if (line[i].Contains("TestType:")) type = GetFieldValue(line[i]);
                 if (line[i].Contains("Result:"))
                 {
-                    string bufor = GetFieldValue(line[i]).ToLower();
-                    status = string.Concat(bufor[0].ToString().ToUpper(), bufor.AsSpan(1));
+                    // Converts string to have first letter upper-case. passed => Passed
+                    string statusValue = GetFieldValue(line[i]).ToLower();
+                    string capitalizedStatusValue = string.Concat(statusValue[0].ToString().ToUpper(), statusValue.AsSpan(1));
+                    status = Enum.Parse<Common.TestStatus>(capitalizedStatusValue);
                 }
                 if (line[i].Contains("Value:")) value = GetFieldValue(line[i]);
                 if (line[i].Contains("Units:")) unit = GetFieldValue(line[i]);
@@ -166,10 +171,16 @@ public class FileTestReport : TestReport, ITestReport
 
                 if (i == line.Length - 1)
                 {
-                    DateTime datetime = ConvertDateAndTime(date, time, testCase);
+                    DateTime datetime = ConvertDateAndTime(date, time);
 
-                    var testStep = TestStep.Create(name, datetime, status, type, value, unit, lowerlimit, upperlimit);
-                    if (testStep.Name != string.Empty && testStep.Status != string.Empty)
+                    var testStep = new TestStep(name, datetime, status);
+                    testStep.Type = type;
+                    testStep.Value = value;
+                    testStep.Unit = unit;
+                    testStep.LowerLimit = lowerlimit;
+                    testStep.UpperLimit = upperlimit;
+
+                    if (testStep.Name != string.Empty && status != Common.TestStatus.NotSet)
                         testSteps.Add(testStep);
                 }
             }
@@ -180,7 +191,7 @@ public class FileTestReport : TestReport, ITestReport
     {
         return lineOfText.Split("\t")[1].Trim().Replace(',', '_');
     }
-    private static DateTime ConvertDateAndTime(string date, string time, string cc)
+    private static DateTime ConvertDateAndTime(string date, string time)
     {
         if (date == string.Empty || time == string.Empty) return DateTime.MinValue;
         var year = int.Parse(date.Substring(6, 4));

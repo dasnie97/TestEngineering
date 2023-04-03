@@ -22,9 +22,9 @@ public class TestReportTest
         FileTestReport testReport = creator.Create();
 
         Assert.Equal(creator.SerialNumber, testReport.SerialNumber);
-        Assert.Equal(creator.Status, testReport.Status);
-        Assert.Equal(creator.Workstation, testReport.Workstation.Name);
-        Assert.Equal(creator.DateAndTime, testReport.TestDateTimeStarted);
+        Assert.Equal(creator.TestSteps.First().Status, testReport.Status);
+        Assert.Equal(creator.Workstation.Name, testReport.Workstation.Name);
+        Assert.Equal(creator.TestSteps.First().DateTimeFinish, testReport.TestDateTimeStarted);
         Assert.Equal(creator.TestSteps, testReport.TestSteps);
     }
 

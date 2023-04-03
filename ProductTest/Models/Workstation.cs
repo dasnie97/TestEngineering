@@ -1,9 +1,8 @@
-﻿using ProductTest.Common;
-using ProductTest.Interfaces;
+﻿using ProductTest.Interfaces;
 
 namespace ProductTest.Models;
 
-public class Workstation : WorkstationBase, IWorkstation
+public class Workstation : Common.Workstation, IWorkstation
 { 
     public Workstation(string name = "", string operatorName = "")
     {

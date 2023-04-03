@@ -1,19 +1,10 @@
-﻿using ProductTest.Common;
+﻿namespace ProductTest.Models;
 
-namespace ProductTest.Models;
-
-public class TestReport : TestReportBase
+public class TestReport : Common.TestReport
 {
-    public static TestReport Create(string serialNumber,
-                            string workstation,
-                            List<TestStepBase> testSteps)
-    {
-        return new TestReport(serialNumber, workstation, testSteps);
-    }
-
-    protected TestReport(string serialNumber,
-                            string workstation,
-                            List<TestStepBase> testSteps) : 
+    public TestReport(string serialNumber,
+                            Common.Workstation workstation,
+                            IEnumerable<Common.TestStep> testSteps) : 
         base(serialNumber, workstation, testSteps)
 	{}
 
