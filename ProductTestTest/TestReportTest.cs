@@ -1,7 +1,4 @@
-using ProductTest.Common;
-using ProductTest.Interfaces;
 using ProductTest.Models;
-using System.Security.Cryptography;
 
 namespace ProductTestTest;
 

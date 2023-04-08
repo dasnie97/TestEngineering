@@ -7,16 +7,16 @@ public class FileTestReport : TestReport, ITestReport
     public string FilePath { get; protected set; }
     public string FileName { get; protected set; }
     public static FileTestReport Create(string serialNumber,
-                        Common.Workstation workstation,
-                        IEnumerable<Common.TestStep> testSteps,
+                        Workstation workstation,
+                        IEnumerable<TestStep> testSteps,
                         string filePath = "")
     {
         return new FileTestReport(serialNumber, workstation, testSteps, filePath);
     }
 
     protected FileTestReport(string serialNumber,
-                            Common.Workstation workstation,
-                            IEnumerable<Common.TestStep> testSteps,
+                            Workstation workstation,
+                            IEnumerable<TestStep> testSteps,
                             string filePath) : base(serialNumber, workstation, testSteps)
     {
         FilePath = filePath;
@@ -59,7 +59,7 @@ public class FileTestReport : TestReport, ITestReport
             $""
         };
 
-        foreach (Common.TestStep testStep in TestSteps)
+        foreach (TestStep testStep in TestSteps)
         {
             testReport.Add($"TestName:\t{testStep.Name}");
             if (!string.IsNullOrEmpty(testStep.Type))

@@ -2,8 +2,11 @@
 
 namespace ProductTest.Models;
 
-public class Workstation : Common.Workstation, IWorkstation
-{ 
+public class Workstation : IWorkstation
+{
+    public string Name { get; protected set; }
+    public string OperatorName { get; protected set; }
+
     public Workstation(string name = "", string operatorName = "")
     {
         Name = name;
