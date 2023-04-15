@@ -9,5 +9,4 @@ public class CreateTestReportDTO
     public TimeSpan TestingTime { get; set; }
     public string FixtureSocket { get; set; }
     public string Failure { get; set; }
-    public string ProcessStep { get; set; }
 }

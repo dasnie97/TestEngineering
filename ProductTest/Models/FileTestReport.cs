@@ -99,7 +99,7 @@ public class FileTestReport : TestReport, ITestReport
             if (line.Contains("PanelBarcode:") || line.Contains("ImageBarcode:"))
             {
                 string[] SplittedLine = line.Split("\t", StringSplitOptions.None);
-                serialNumber = SplittedLine[1].Trim();
+                serialNumber = SplittedLine[1].Trim().ToUpperInvariant();
                 break;
             }
         }
