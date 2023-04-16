@@ -2,7 +2,6 @@
 
 public class WorkstationDTO
 {
-    public int Id { get; set; }
     public string Name { get; set; }
     public string OperatorName { get; set; }
     public string ProcessStep { get; set; }

@@ -11,4 +11,5 @@ public class TestReportDTO
     public string FixtureSocket { get; set; }
     public string Failure { get; set; }
     public bool IsFirstPass { get; set; }
+    public DateTime RecordCreated { get; set; }
 }
