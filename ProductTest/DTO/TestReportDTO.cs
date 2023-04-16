@@ -10,4 +10,5 @@ public class TestReportDTO
     public TimeSpan TestingTime { get; set; }
     public string FixtureSocket { get; set; }
     public string Failure { get; set; }
+    public bool IsFirstPass { get; set; }
 }

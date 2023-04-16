@@ -36,7 +36,7 @@ public class TestReportTest
         FileTestReport testReportCreatedFromFile = FileTestReport.CreateFromFile(testReport.FilePath);
 
         Assert.True(File.Exists(testReport.FilePath));
-        Assert.Equal(testReport.SerialNumber, testReportCreatedFromFile.SerialNumber);
+        Assert.Equal(testReport.SerialNumber.ToUpperInvariant(), testReportCreatedFromFile.SerialNumber);
         Assert.Equal(testReport.Status, testReportCreatedFromFile.Status);
         Assert.Equal(testReport.Workstation.Name, testReportCreatedFromFile.Workstation.Name);
         Assert.Equal(testReport.Failure, testReportCreatedFromFile.Failure);
