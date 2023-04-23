@@ -1,6 +1,6 @@
-﻿using ProductTest.Interfaces;
+﻿using TestEngineering.Interfaces;
 
-namespace ProductTest.Models;
+namespace TestEngineering.Models;
 
 public class FileTestReport : TestReport, ITestReport
 {

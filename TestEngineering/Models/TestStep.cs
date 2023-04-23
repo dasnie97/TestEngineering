@@ -1,4 +1,4 @@
-﻿namespace ProductTest.Models;
+﻿namespace TestEngineering.Models;
 
 public class TestStep
 {

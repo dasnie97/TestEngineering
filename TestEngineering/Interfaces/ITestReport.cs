@@ -1,4 +1,4 @@
-﻿namespace ProductTest.Interfaces;
+﻿namespace TestEngineering.Interfaces;
 
 public interface ITestReport
 {

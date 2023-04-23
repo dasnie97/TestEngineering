@@ -1,9 +1,8 @@
-﻿namespace ProductTest.DTO;
+﻿namespace TestEngineering.DTO;
 
-public class WorkstationDTO
+public class CreateWorkstationDTO
 {
     public string Name { get; set; }
     public string OperatorName { get; set; }
     public string ProcessStep { get; set; }
-    public string State { get; set; }
 }

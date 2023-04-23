@@ -5,9 +5,9 @@
 /Test
 /.vs
 /README.md
-/ProductTest/bin
-/ProductTest/obj
-/ProductTest/Properties
-/ProductTestTest/bin
-/ProductTestTest/obj
-/ProductTestTest/Usings.cs
+/TestEngineering/bin
+/TestEngineering/obj
+/TestEngineering/Properties
+/TestEngineering.Tests/bin
+/TestEngineering.Tests/obj
+/TestEngineering.Tests/Usings.cs

@@ -1,6 +1,6 @@
-﻿using ProductTest.Models;
+﻿using TestEngineering.Models;
 
-namespace ProductTestTest;
+namespace TestEngineering.Tests;
 
 public class FileTestReportCreator
 {

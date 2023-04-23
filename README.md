@@ -1,2 +1,2 @@
-# ProductTest
-Provides helper classes for descibing testing production process of a product.
+# TestEngineering
+Shared library for common problems in Test Engineering.

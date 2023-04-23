@@ -1,7 +1,8 @@
-﻿namespace ProductTest.DTO;
+﻿namespace TestEngineering.DTO;
 
-public class CreateTestReportDTO
+public class TestReportDTO
 {
+    public int Id { get; set; }
     public string Workstation { get; set; }
     public string SerialNumber { get; set; }
     public string Status { get; set; }
@@ -9,4 +10,6 @@ public class CreateTestReportDTO
     public TimeSpan TestingTime { get; set; }
     public string FixtureSocket { get; set; }
     public string Failure { get; set; }
+    public bool IsFirstPass { get; set; }
+    public DateTime RecordCreated { get; set; }
 }
