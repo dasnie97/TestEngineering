@@ -1,9 +1,11 @@
 ﻿using FluentFTP;
 using Microsoft.Extensions.Configuration;
+using TestEngineering.Interfaces;
+using TestEngineering.Settings;
 
-namespace TestEngineering.Web;
+namespace TestEngineering.Services;
 
-public class FTPService : IFTPService, IDisposable
+public class FTPService : IFTP, IDisposable
 {
     private FtpClient _client;
     private bool connectionEstablished = false;
