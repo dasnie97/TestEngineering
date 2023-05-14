@@ -143,12 +143,13 @@ public class FileTestReport : TestReport, ITestReport
             string name = null;
             string date = null;
             string time = null;
-            TestStatus status = TestStatus.NotSet;
+            TestStatus status = TestStatus.Notset;
             string type = null;
             string value = null;
             string unit = null;
             string lowerlimit = null;
             string upperlimit = null;
+            string failDesc = null;
 
             string[] line = testCase.Split("\n");
             for (int i = 0; i < line.Length; i++)
@@ -168,7 +169,8 @@ public class FileTestReport : TestReport, ITestReport
                 if (line[i].Contains("Units:")) unit = GetFieldValue(line[i]);
                 if (line[i].Contains("LowerLimit:")) lowerlimit = GetFieldValue(line[i]);
                 if (line[i].Contains("UpperLimit:")) upperlimit = GetFieldValue(line[i]);
-
+                if (line[i].Contains("FailDesc:")) failDesc = GetFieldValue(line[i]);
+                
                 if (i == line.Length - 1)
                 {
                     DateTime datetime = ConvertDateAndTime(date, time);
@@ -179,8 +181,9 @@ public class FileTestReport : TestReport, ITestReport
                     testStep.Unit = unit;
                     testStep.LowerLimit = lowerlimit;
                     testStep.UpperLimit = upperlimit;
+                    testStep.Failure = failDesc;
 
-                    if (testStep.Name != string.Empty && status != TestStatus.NotSet)
+                    if (testStep.Name != string.Empty)
                         testSteps.Add(testStep);
                 }
             }
