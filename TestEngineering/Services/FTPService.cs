@@ -5,11 +5,8 @@ using TestEngineering.Settings;
 
 namespace TestEngineering.Services;
 
-public class FTPService : IFTP, IDisposable
+public class FTPService : IFTP
 {
-    private FtpClient _client;
-    private bool connectionEstablished = false;
-
     private readonly IConfiguration _configuration;
     private readonly string _host;
     private readonly string _user;
@@ -30,42 +27,26 @@ public class FTPService : IFTP, IDisposable
         _pass = _configuration[FtpSettingsKeys.Password];
     }
 
-    public void Dispose()
-    {
-        CloseConnection();
-    }
-
     public void Upload(string filePath)
     {
-        if (!connectionEstablished)
+        using (FtpClient _client = InitializeConnection())
         {
-            InitializeConnection();
-        }
-
-        var status = _client.UploadFile(filePath, $"/{Path.GetFileName(filePath)}", verifyOptions: FtpVerify.Throw);
-        if (status != FtpStatus.Success)
-        {
-            throw new Exception($"There was an error processing file {filePath}");
+            var status = _client.UploadFile(filePath, $"/{Path.GetFileName(filePath)}", FtpRemoteExists.Overwrite, false, FtpVerify.Retry);
+            if (status != FtpStatus.Success)
+            {
+                throw new Exception($"There was an error processing file {filePath}");
+            }
         }
     }
 
-    private void InitializeConnection()
+    private FtpClient InitializeConnection()
     {
         var ftpServer = _host;
         var ftpUsername = _user;
         var ftpPassword = _pass;
 
-        _client = new FtpClient(ftpServer, ftpUsername, ftpPassword);
+        var _client = new FtpClient(ftpServer, ftpUsername, ftpPassword);
         _client.AutoConnect();
-        connectionEstablished = true;
-    }
-
-    private void CloseConnection()
-    {
-        if (connectionEstablished)
-        {
-            _client.Disconnect();
-            connectionEstablished = false;
-        }
+        return _client;
     }
 }
