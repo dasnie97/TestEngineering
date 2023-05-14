@@ -1,4 +1,4 @@
-﻿namespace TestEngineering.Web;
+﻿namespace TestEngineering.Settings;
 
 public static class HttpSettingsKeys
 {
