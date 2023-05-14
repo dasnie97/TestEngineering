@@ -29,7 +29,7 @@ public class TestReport
     {
         TestSteps = new List<TestStep>();
         TestDateTimeStarted = DateTime.MinValue;
-        Status = TestStatus.NotSet;
+        Status = TestStatus.Notset;
     }
 
 
@@ -70,7 +70,7 @@ public class TestReport
         var failDetails = "";
         foreach (var test in TestSteps)
         {
-            if (test.Status == TestStatus.Failed)
+            if (test.Status != TestStatus.Passed)
                 failDetails = $"{test.Name}\nValue measured: {test.Value}\nLower limit: {test.LowerLimit}\nUpper limit: {test.UpperLimit}";
         }
         Failure = failDetails;

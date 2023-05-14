@@ -1,11 +1,12 @@
 ﻿using Microsoft.Extensions.Configuration;
-using System.Net;
 using System.Net.Http.Json;
 using System.Web;
+using TestEngineering.Interfaces;
+using TestEngineering.Settings;
 
-namespace TestEngineering.Web;
+namespace TestEngineering.Services;
 
-public class HTTPService : IHTTPService
+public class HTTPService : IHTTP
 {
     public string BaseUri { get; private set; }
 

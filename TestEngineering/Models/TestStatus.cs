@@ -2,7 +2,7 @@
 
 public enum TestStatus
 {
-    NotSet,
+    Notset,
     Passed,
     Failed,
     Terminated,
