@@ -45,7 +45,7 @@ public class FileProcessorService : IFileProcessor
         if (copyingEnabled)
         {
             var destinationFileName = Path.Combine(dateNamedCopyDirectory, Path.GetFileName(testReport.FilePath));
-            File.Copy(testReport.FilePath, destinationFileName);
+            File.Copy(testReport.FilePath, destinationFileName, true);
             copiedFilePath = destinationFileName;
         }
         return copiedFilePath;
