@@ -40,8 +40,14 @@ public class HTTPService : IHTTP
     {
         var client = _httpClient.Value;
         var response = await client.PostAsJsonAsync(url, data).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<T>().ConfigureAwait(false);
+        if (response.IsSuccessStatusCode) 
+        {
+            return await response.Content.ReadFromJsonAsync<T>().ConfigureAwait(false);
+        }
+        else
+        {
+            throw new HttpRequestException(response.Content.ReadAsStringAsync().Result);
+        }
     }
 
     public async Task<List<T>> GetAsync<T>(string url, Dictionary<string, string>? parameters = null)
