@@ -68,8 +68,14 @@ public class HTTPService : IHTTP
     {
         var client = _httpClient.Value;
         var response = await client.PutAsJsonAsync(url, data).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
-        return response;
+        if (response.IsSuccessStatusCode)
+        {
+            return response;
+        }
+        else
+        {
+            throw new HttpRequestException(response.Content.ReadAsStringAsync().Result);
+        }
     }
 
 
