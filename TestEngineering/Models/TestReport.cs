@@ -19,11 +19,11 @@ public class TestReport
         SerialNumber = serialNumber;
         Workstation = workstation;
         TestSteps = testSteps;
-        SetTestDateAndTime();
         SetStatus();
-        SetFailedStepData();
-        SetTestSocket();
+        SetTestDateAndTime();
         SetBoardTestingTime();
+        SetTestSocket();
+        SetFailedStepData();
     }
     public TestReport()
     {
